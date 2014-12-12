@@ -1,26 +1,16 @@
 #include <unistd.h>
 #include <iostream>
 #define MAXV 8
-float getDistance(float * v1, float * v2, int number)
-{
-	float diff;
-	for (int i = 0; i < 3; i++) 
-	{
-		diff += (v1[number][i] - v2[number][i]) * (v1[number][i] - v2[number][i]);
-	}
-
-	return sqrt(diff);
-}
-void distEfficiency()
+void momentumEfficiency()
 {
 	//gStyle->SetCanvasPreferGL(kTRUE);
 	int bin_e = 20;
-	int max_e = 30;
+	int max_e = 165;
 	TCanvas * c1 = new TCanvas("c1", "Data-MC",0,0,500,500);
-	TH1F * distmc = new TH1F("distmc", "E(Ntracks)", bin_e,0,max_e);
-	TH1F * distreco = new TH1F("distreco", "tracks", bin_e,0,max_e);
-	distreco->Sumw2();
-	distmc->Sumw2();
+	TH1F * momentummc = new TH1F("momentummc", "P_{b}^{mc}", bin_e,0,max_e);
+	TH1F * momentumreco = new TH1F("momentumreco", "P_{b}^{reco}", bin_e,0,max_e);
+	momentumreco->Sumw2();
+	momentummc->Sumw2();
 	TChain* MC = new TChain("Stats");
 	MC->Add("TrashMCTest.root");
 	TChain* RECO = new TChain("TaggedVertices");
@@ -41,11 +31,11 @@ void distEfficiency()
 	MC->SetBranchAddress("PDG", _PDG);
 	MC->SetBranchAddress("generation", _generation);*/
 	//MC->SetBranchAddress("coordinates", _coordinates);
-	float _bdistance = 0.0;
-	float _bbardistance = 0.0;
+	float _bmomentum = 0.0;
+	float _bbarmomentum = 0.0;
 
-	MC->SetBranchAddress("bdistance", &_bdistance);
-	MC->SetBranchAddress("bbardistance", &_bbardistance);
+	MC->SetBranchAddress("bmomentum", &_bmomentum);
+	MC->SetBranchAddress("bbarmomentum", &_bbarmomentum);
 
 	int _numberOfTagged = 0;
 	int _PDGreco[MAXV];
@@ -77,23 +67,23 @@ void distEfficiency()
 				bbars.push_back(i);
 			}
 		}
-		distmc->Fill(_bdistance);
-		distmc->Fill(_bbardistance);
-		if (bs.size() == 2) 
+		momentummc->Fill(_bmomentum);
+		momentummc->Fill(_bbarmomentum);
+		if (bs.size() > 0) 
 		{
-			distreco->Fill(_bdistance);
+			momentumreco->Fill(_bmomentum);
 		}
-		if (bbars.size() == 2) 
+		if (bbars.size() > 0) 
 		{
-			distreco->Fill(_bbardistance);
+			momentumreco->Fill(_bbarmomentum);
 		}
 	}
 	gStyle->SetPalette(1);
-	//distmc->Draw();
-	distreco->Draw("psame");
-	if (TEfficiency::CheckConsistency(*distreco, *distmc)) 
+	//momentummc->Draw();
+	momentumreco->Draw("psame");
+	if (TEfficiency::CheckConsistency(*momentumreco, *momentummc)) 
 	{
-		TEfficiency * eff = new TEfficiency(*distreco, *distmc);
+		TEfficiency * eff = new TEfficiency(*momentumreco, *momentummc);
 	}
 	eff->Draw("AP");
 }
