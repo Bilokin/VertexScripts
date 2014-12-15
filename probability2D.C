@@ -109,11 +109,11 @@ void probability2D(){
 	//probhist->SetFillColor(kYellow);
 	probhist->GetXaxis()->SetTitle("P(V)");
 	probhist->Draw("colz");
-	probhist_non->Draw("colz");
+	//probhist_non->Draw("colz");
 	boxPad->SetGrid();
 	box1Pad->cd();
 	chihist->Draw("colz");
-	chihist_non->Draw("colz");
+	//chihist_non->Draw("colz");
 	box1Pad->SetGrid();
 	box1Pad->Modified();
 	boxPad->Modified();

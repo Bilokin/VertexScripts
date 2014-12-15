@@ -102,7 +102,6 @@ void chargeEfficiency()
 		int recobbarcharge = 0;
 		for (int j = 0; j < _numberOfTagged; j++) 
 		{
-			numberreco->Fill(_numberOfParticles[j]);
 			if (_PDGreco[j] == 5) 
 			{
 				recobcharge += _chargereco[j];

@@ -69,11 +69,11 @@ void momentumEfficiency()
 		}
 		momentummc->Fill(_bmomentum);
 		momentummc->Fill(_bbarmomentum);
-		if (bs.size() > 0) 
+		if (bs.size() > 1) 
 		{
 			momentumreco->Fill(_bmomentum);
 		}
-		if (bbars.size() > 0) 
+		if (bbars.size() > 1) 
 		{
 			momentumreco->Fill(_bbarmomentum);
 		}
