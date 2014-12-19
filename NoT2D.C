@@ -2,14 +2,15 @@
 #include <iostream>
 using std::cout;
 
-void probability2D(){
+void NoT2D(){
 	int _vertex = 0;
 	int _pdg[MAXN];
 	float _probability[MAXN];
 	float _chi2[MAXN];
 	int _generation[MAXN];
+	int _numberOfParticles[MAXN];
 	
-	TCanvas * c1 = new TCanvas("c1", "The 3d view",0,0,1000,1000);
+	TCanvas * c1 = new TCanvas("c1", "The 3d view",0,0,500,500);
 	gStyle->SetCanvasColor(kWhite);
 	gStyle->SetPadColor(kWhite);
 	c1->Divide(2,2);
@@ -17,8 +18,8 @@ void probability2D(){
 	TPad *box1Pad = new TPad("box1", "box1", 0.52, 0.02, 0.98, 0.92);
 	boxPad->Draw();
 	box1Pad->Draw();*/
-	int nbins = 30;
-	int maxd = 15;
+	int nbins = 10;
+	int maxd = 10;
 	TH2F * probhist = new TH2F("Pw","P()",nbins,0,1.0 ,nbins, 0, maxd );
 	TH2F * probhist_non = new TH2F("Pwo","P()",nbins,0,1.0 , nbins,0, maxd );
 	probhist_non->Sumw2();
@@ -42,6 +43,7 @@ void probability2D(){
 	T->SetBranchAddress("generation", _generation);
 	T->SetBranchAddress("chi2", _chi2);
 	T->SetBranchAddress("probability", _probability);
+	T->SetBranchAddress("numberOfParticles", _numberOfParticles);
 	
 	cout << "mTotalNumberOfEvents: " << mTotalNumberOfEvents << '\n';
 	int counter = 0;
@@ -67,26 +69,26 @@ void probability2D(){
 		{
 			if (bbars.size() > 1) 
 			{
-				probhist->Fill(_probability[bbars[k]], _bbardistance);
-				chihist->Fill(_chi2[bbars[k]], _bbardistance);
+				probhist->Fill(_probability[bbars[k]], _numberOfParticles[bbars[k]]);
+				chihist->Fill(_chi2[bbars[k]], _numberOfParticles[bbars[k]]);
 			}
 			else 
 			{
-				probhist_non->Fill(_probability[bbars[0]], _bbardistance);
-				chihist_non->Fill(_chi2[bbars[0]], _bbardistance);
+				probhist_non->Fill(_probability[bbars[0]], _numberOfParticles[bbars[0]]);
+				chihist_non->Fill(_chi2[bbars[0]], _numberOfParticles[bbars[0]]);
 			}
 		}
 		for (int m = 0; m < bs.size(); m++) 
 		{
 			if (bs.size() > 1) 
 			{
-				probhist->Fill(_probability[bs[m]], _bdistance);
-				chihist->Fill(_chi2[bs[m]], _bdistance);
+				probhist->Fill(_probability[bs[m]], _numberOfParticles[bs[m]]);
+				chihist->Fill(_chi2[bs[m]], _numberOfParticles[bs[m]]);
 			}
 			else 
 			{
-				probhist_non->Fill(_probability[bs[0]], _bdistance);
-				chihist_non->Fill(_chi2[bs[0]], _bdistance);
+				probhist_non->Fill(_probability[bs[0]], _numberOfParticles[bs[0]]);
+				chihist_non->Fill(_chi2[bs[0]], _numberOfParticles[bs[0]]);
 			}
 		}
 	}
@@ -96,7 +98,7 @@ void probability2D(){
 	
 	probhist_non->GetXaxis()->SetTitle("P(V)");
 	probhist->GetXaxis()->SetTitle("P(V)");
-	
+	gStyle->SetPalette(1);
 	c1->cd(1);
 	probhist->Draw("colz");
 	c1->cd(3);

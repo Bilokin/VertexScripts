@@ -101,10 +101,14 @@ void probability2D(){
 	probhist->Draw("colz");
 	c1->cd(3);
 	probhist_non->Draw("colz");
+	boxPad->SetGrid();
 	c1->cd(2);
 	chihist->Draw("colz");
 	c1->cd(4);
 	chihist_non->Draw("colz");
+	box1Pad->SetGrid();
+	box1Pad->Modified();
+	boxPad->Modified();
 	std::cout << "Statistics: " << probhist->GetEntries() << " with ternary; " << probhist_non->GetEntries() << " without ternary; " << counter << " total\n";
 	std::cout << "Mean: " << probhist->GetMean() << " with ternary; " << probhist_non->GetMean() << " without ternary;\n";
 }
