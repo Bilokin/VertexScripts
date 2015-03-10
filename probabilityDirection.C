@@ -17,14 +17,18 @@ void probabilityDirection(){
 	TPad *box1Pad = new TPad("box1", "box1", 0.52, 0.02, 0.98, 0.92);
 	boxPad->Draw();
 	box1Pad->Draw();
-	TH1F * probhist = new TH1F("Phi","Phi",50,0,1.0 );
-	TH1F * probhist_non = new TH1F("Teta","Teta",50,0,1.0  );
+	int nbin = 40;
+	TH1F * probhist = new TH1F("Phi","Phi",nbin,0,1.01 );
+	TH1F * probhist_non = new TH1F("Teta","Teta",nbin,0,1.01  );
 	probhist_non->Sumw2();
-	TH1F * chihist= new TH1F("PhiD","PhiD",50,0,30 );
-	TH1F * chihist_non = new TH1F("TetaD","TetaD",50,0,30  );
+	TH1F * chihist= new TH1F("PhiD","PhiD",40,0,30 );
+	TH1F * chihist_non = new TH1F("TetaD","TetaD",40,0,30  );
 	chihist_non->Sumw2();
+
 	TChain* T = new TChain("TaggedVertices");
 	T->Add("TrashRecoTest.root");
+	TChain* T2 = new TChain("Stats");
+	T2->Add("TrashMCTest.root");
 
 	int mTotalNumberOfEvents = T->GetEntries();
 	T->SetBranchAddress("numberOfTagged", &_vertex);
@@ -33,12 +37,31 @@ void probabilityDirection(){
 	T->SetBranchAddress("chi2", _chi2);
 	T->SetBranchAddress("probability", _probability);
 	
+	int _btotalnumber = 0;
+	int _bbartotalnumber = 0;
+	int _bnumber = 0;
+	int _bbarnumber = 0;
+	float _bdistance = 0.0;
+	float _bbardistance = 0.0;
+	float _bIPdistance = 0.0;
+	float _bbarIPdistance = 0.0;
+	T2->SetBranchAddress("btotalnumber", &_btotalnumber);
+	T2->SetBranchAddress("bbartotalnumber", &_bbartotalnumber);
+	T2->SetBranchAddress("bnumber", &_bnumber);
+	T2->SetBranchAddress("bbarnumber", &_bbarnumber);
+	T2->SetBranchAddress("bdistance", &_bdistance);
+	T2->SetBranchAddress("bbardistance", &_bbardistance);
+	T2->SetBranchAddress("bIPdistance", &_bIPdistance);
+	T2->SetBranchAddress("bbarIPdistance", &_bbarIPdistance);
 	cout << "mTotalNumberOfEvents: " << mTotalNumberOfEvents << '\n';
 	int counter = 0;
-	int num = 0;
+	int totalcounter = 0;
+	int num = 2;
+	float distcut = .5;
 	for (unsigned int i = 0; i < mTotalNumberOfEvents; i += 1)
 	{
 		T->GetEntry(i);
+		T2->GetEntry(i);
 		vector<int> bs;
 		vector<int> bbars;
 		for (int j = 0; j < _vertex; j++) 
@@ -54,8 +77,19 @@ void probabilityDirection(){
 		}
 		for (int k = 0; k < bbars.size(); k++) 
 		{
+			/*if (
+			     _bbarIPdistance < 0.50 
+			  || _bbartotalnumber > 5
+			  || _bbartotalnumber < 3
+			  || _bbarnumber < 2
+			  || _bbartotalnumber - _bbarnumber < 2
+			) 
+			{
+				continue;
+			}*/
 			if (bbars.size() > 1) 
 			{
+				std::cout << "Nb: " << i << '\n';
 				probhist->Fill(_probability[bbars[k]]);
 				chihist->Fill(_chi2[bbars[k]]);
 			}
@@ -63,10 +97,20 @@ void probabilityDirection(){
 			{
 				probhist_non->Fill(_probability[bbars[0]]);
 				chihist_non->Fill(_chi2[bbars[0]]);
-			}
+			} 
 		}
 		for (int m = 0; m < bs.size(); m++) 
 		{
+			/*if (
+			     _bIPdistance < 0.50
+			  || _btotalnumber > 5
+			  //|| _btotalnumber < 3
+			  || _bnumber < 2
+			  || _btotalnumber - _bnumber < 2
+			) 
+			{
+				continue;
+			}*/
 			if (bs.size() > 1) 
 			{
 				probhist->Fill(_probability[bs[m]]);
@@ -76,60 +120,47 @@ void probabilityDirection(){
 			{
 				probhist_non->Fill(_probability[bs[0]]);
 				chihist_non->Fill(_chi2[bs[0]]);
-			}
+			} 
+		}
+		if ( bbars.size() > 0) 
+		{
+			totalcounter++;
+		}
+		if ( bs.size() > 0) 
+		{
+			totalcounter++;
 		}
 	}
 	boxPad->cd();
 	probhist_non->SetMarkerStyle(20);
 	chihist_non->SetMarkerStyle(20);
 	chihist_non->SetMarkerColor(kBlack);
-	chihist_non->SetMarkerSize(0.5);
+	chihist_non->SetMarkerSize(0.7);
 	chihist_non->GetXaxis()->SetTitle("#chi^2");
 	chihist->SetFillColor(kYellow);
 	chihist->GetXaxis()->SetTitle("#chi^{2}");
 	
 	probhist_non->SetMarkerColor(kBlack);
-	probhist_non->SetMarkerSize(0.5);
+	probhist_non->SetMarkerSize(0.7);
 	probhist_non->GetXaxis()->SetTitle("P(V)");
 	//probhist->GetYaxis()->SetRange(0,0.1);
 	//probhist_non->GetYaxis()->SetRange(0,0.1);
-	probhist->SetMaximum(80);
-	probhist_non->SetMaximum(80);
+	probhist->SetMaximum(2000);
+	probhist_non->SetMaximum(2000);
+	probhist_non->SetMinimum(0);
+	probhist->SetMinimum(0);
 	probhist->SetFillColor(kYellow);
 	probhist->GetXaxis()->SetTitle("P(V)");
-	probhist->DrawNormalized("same",1);
-	probhist_non->DrawNormalized("ex0psame",1);
+	probhist->DrawNormalized("same");
+	probhist_non->DrawNormalized("ex0psame");
 	boxPad->SetGrid();
 	box1Pad->cd();
+	box1Pad->SetLogy();
 	chihist->DrawNormalized("");
 	chihist_non->DrawNormalized("ex0psame",1);
 	box1Pad->SetGrid();
 	box1Pad->Modified();
 	boxPad->Modified();
-	std::cout << "Statistics: " << probhist->GetEntries() << " with ternary; " << probhist_non->GetEntries() << " without ternary; " << counter << " total\n";
+	std::cout << "Statistics: " << probhist->GetEntries() << " with ternary; " << probhist_non->GetEntries() << " without ternary; " << totalcounter << " total; " << counter << " discarded\n";
 	std::cout << "Mean: " << probhist->GetMean() << " with ternary; " << probhist_non->GetMean() << " without ternary;\n";
-}
-float getIsotropy(TH1F * histogram)
-{
-	float derivative = 0.0;
-	int number = histogram->GetXaxis()->GetNbins();
-	float dphi =(histogram->GetXaxis()->GetXmax() - histogram->GetXaxis()->GetXmin()) / (float) number;
-	for (int count = 2; count < number+1; count++)
-	{
-	        float f1 = histogram->GetBinContent(count-1);
-		float f2 = histogram->GetBinContent(count);
-		derivative += (f2 - f1) / dphi;
-	}
-	derivative += (histogram->GetBinContent(1) - histogram->GetBinContent(number+1)) / dphi;
-	cout <<"Derivative: " << derivative << '\n';
-	return fabs(derivative);
-}
-float fit(TH1F * histogram)
-{
-	TCanvas * c2 = new TCanvas("c2", "fit",0,0,500,500);
-	TF1 *f1 = new TF1("f1","[0]*exp(-0.5*((x-[1])/[2])^2)",0,1);
-	//f1->SetParameters(1,0.25,0.03,0);
-	histogram->Fit("f1","R");
-	c2->cd();
-	f1->Draw();
 }
