@@ -99,7 +99,7 @@ void table(){
 
 	T2->SetBranchAddress("tag", &_tag);
 
-	int mTotalNumberOfEvents = T->GetEntries();
+	int mTotalNumberOfEvents = T2->GetEntries();
 	T->SetBranchAddress("numberOfTagged", &_vertex);
 	T->SetBranchAddress("PDG", _pdg);
 	T->SetBranchAddress("generation", _generation);
@@ -136,7 +136,7 @@ void table(){
 		float btags[2];
 		float btag = 0.0;
 		float bbartag = 0.0;
-		/*for (int jet = 0; jet < _jetnumber; jet++) 
+		for (int jet = 0; jet < _jetnumber; jet++) 
 		{
 			if (abs(_mctag[jet]) > 0) 
 			{
@@ -157,8 +157,8 @@ void table(){
 		if (bjets < 2) 
 		{
 			continue;
-		}*/
-		for (int j = 0; j < _vertex; j++) 
+		}
+		/*for (int j = 0; j < _vertex; j++) 
 		{
 			if (_pdg[j] == 5) 
 			{
@@ -170,7 +170,9 @@ void table(){
 				bbars.push_back(j);
 				bbarn += _numberOfParticles[j];
 			}
-		}
+		}*/
+		bn = _brecnumber;
+		bbarn = _bbarrecnumber;
 		//_btotalnumber = _bnumber + _cnumber;
 		//_bbartotalnumber = _bbarnumber + _cbarnumber;
 		if (bn > -1 && _bnumber > -1 ) 
@@ -190,14 +192,14 @@ void table(){
 			}
 			else 
 			{
-				/*std::cout << "i: " << i
+				std::cout << "i: " << i
 					  << " B mc: " << _btotalnumber
 					  << " B rec: " <<  _brecnumber
 					  << " B rec ex: " <<  _bexists
 					  << " Bbar mc: " << _bbartotalnumber
 					  << " Bbar rec: " << _bbarrecnumber
 					  << " Bbar ex: " << _bbarexists
-					  << std::endl;*/
+					  << std::endl;
 			}
 		}
 		if (bbarn > -1 && _bbarnumber > -1) 
@@ -218,31 +220,31 @@ void table(){
 		}
 		float s = 0.0;
 		if (bn > -1
-		    && _bnumber_f > -1
-		    //&& btag > 0.8
+		    //&& _bnumber_f > -1
+		    && btag > 0.3
 		    ) 
 		{
-			probhist_non->Fill(_cnumber_f+_bnumber_f, bn);
+			probhist_non->Fill(_btotalnumber, bn);
 			if (bn > 0) 
 			{
 				aftercuts++;
 			}
-			if (bn == _cnumber_f+_bnumber_f) 
+			if (bn == _bbartotalnumber) 
 			{
 				aftercutsgood++;
 			}
 		}
 		if (bbarn > -1 
-		    && _bbarnumber_f > -1
-		    //&& bbartag > 0.8
+		    //&& _bbarnumber_f > -1
+		    && bbartag > 0.3
 		    ) 
 		{
-			probhist_non->Fill(_cbarnumber_f+_bbarnumber_f, bbarn);
+			probhist_non->Fill(_bbartotalnumber, bbarn);
 			if (bbarn > 0) 
 			{
 				aftercuts++;
 			}
-			if (bbarn == _cbarnumber_f+_bbarnumber_f) 
+			if (bbarn == _bbartotalnumber) 
 			{
 				aftercutsgood++;
 			}

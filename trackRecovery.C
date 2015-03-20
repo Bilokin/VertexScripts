@@ -7,6 +7,8 @@ void trackRecovery(){
 	int _fake = 0;
 	int _missed = 0;
 
+	float _fakeAngle[MAXN];
+	float _missedAngle[MAXN];
 	float _fakeDeviation[MAXN];
 	float _missedDeviation[MAXN];
 	
@@ -17,11 +19,11 @@ void trackRecovery(){
 	gStyle->SetCanvasColor(kWhite);
 	gStyle->SetPadColor(kWhite);
 	c1->Divide(2,1);
-	int nbins = 30;
+	int nbins = 60;
 	int maxx = 30;
-	int maxy = 20;
-	TH2F * fakehist = new TH2F("fake","Fake",nbins,0,maxx,nbins, 0, maxy );
-	TH2F * missedhist= new TH2F("missed","Missed",nbins,0,maxx, nbins,0, maxy );
+	float maxy = 0.10;
+	TH2F * fakehist = new TH2F("fake","Fake",nbins,0,maxx,nbins, 0.0, maxy );
+	TH2F * missedhist= new TH2F("missed","Missed",nbins,0,maxx, nbins,0.0, maxy );
 	TChain* T = new TChain("Stats");
 	T->Add("VertexRestorer.root");
 
@@ -31,10 +33,12 @@ void trackRecovery(){
 	T->SetBranchAddress("fakeDetected", &_fake);
 	T->SetBranchAddress("missedDetected", &_missed);
 
+	T->SetBranchAddress("missedAngle", _missedAngle);
 	T->SetBranchAddress("missedMomentum", _missedMomentum);
 	T->SetBranchAddress("missedDeviation", _missedDeviation);
 	T->SetBranchAddress("fakeMomentum", _fakeMomentum);
 	T->SetBranchAddress("fakeDeviation", _fakeDeviation);
+	T->SetBranchAddress("fakeAngle", _fakeAngle);
 	int mTotalNumberOfEvents = T->GetEntries();
 	cout << "mTotalNumberOfEvents: " << mTotalNumberOfEvents << '\n';
 	int counter = 0;
@@ -44,11 +48,11 @@ void trackRecovery(){
 		T->GetEntry(i);
 		for (int j = 0; j < _fake; j++) 
 		{
-			fakehist->Fill(_fakeMomentum[j], _fakeDeviation[j]);
+			fakehist->Fill(_fakeMomentum[j], _fakeAngle[j]);
 		}
 		for (int k = 0; k < _missed; k++) 
 		{
-			missedhist->Fill(_missedMomentum[k], _missedDeviation[k]);
+			missedhist->Fill(_missedMomentum[k], _missedAngle[k]);
 		}
 	}
 	
