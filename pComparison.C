@@ -7,6 +7,7 @@ void pComparison()
 	TFile * file2 = TFile::Open("TrashRecoTest.root");
 	TTree * normaltree = TaggedVertices;
 	TTree * missedtree = MissedTracks;
+	TTree * missedvertextree = MissedVertex;
 	int bins = 50;
 	int high = 30;
 	TH1F * missed = new TH1F("missed", "missed hist", bins, 0, high);
@@ -22,7 +23,9 @@ void pComparison()
 	missed->SetMarkerSize(0.8);
 	//recotree->SetMarkerColor(kGray);
 	normal->GetXaxis()->SetTitle("|p|_{prongs}, GeV");
+	norcos->SetMinimum(0);
 	missedtree->Draw("momentumMissed >> missed","","samee");
+	missedvertextree->Draw("momentumOfParticlesVtx >> +missed", "momentumOfParticlesVtx > -1.0", "samee");
 	TLegend *legendMean = new TLegend(0.17,0.7,0.5,0.92,NULL,"brNDC");
         legendMean->SetFillColor(kWhite);
         legendMean->SetBorderSize(0);
@@ -36,6 +39,8 @@ void pComparison()
 	miscos->SetMarkerStyle(20);
 	miscos->SetMarkerSize(0.8);
 	norcos->GetXaxis()->SetTitle("cos#theta_{prongs}");
-	missedtree->Draw("costhetaMissed >> miscos","","samee");
+	missedvertextree->Draw("costhetaOfParticlesVtx >> +miscos", "costhetaOfParticlesVtx > -1.0", "samee");
+	missedtree->Draw("costhetaMissed >> +miscos","","samee");
+	miscos->Draw("samee");
 	gPad->Modified();
 }

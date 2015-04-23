@@ -73,10 +73,10 @@ void chargeEfficiency()
 	MC2->SetBranchAddress("bbarcharge", &_bbarcharge);
 	MC2->SetBranchAddress("bnumber", &_bnumber);
 	MC2->SetBranchAddress("bbarnumber", &_bbarnumber);
-	/*MC2->SetBranchAddress("cbarnumber", &_cbarnumber);
+	MC2->SetBranchAddress("cbarnumber", &_cbarnumber);
 	MC2->SetBranchAddress("cnumber", &_cnumber);
 	MC2->SetBranchAddress("bIPdistance", &_bdistance);
-	MC2->SetBranchAddress("bbarIPdistance", &_bbardistance);*/
+	MC2->SetBranchAddress("bbarIPdistance", &_bbardistance);
 
 	int _numberOfTagged = 0;
 	int _PDGreco[MAXV];
@@ -132,16 +132,16 @@ void chargeEfficiency()
 		}*/
 		std::cout << "i: " << k << '\n';
 
-		std::cout << "Reco b charge: " << _brecocharge 
+	/*	std::cout << "Reco b charge: " << _brecocharge 
 			  << '(' << bexist << ')'
 			  <<"\t Gen b charge: " << _bcharge 
 			  << '\n';
 		std::cout << "Reco bbar charge: " << _bbarrecocharge 
 			  << '(' << bbarexist << ')'
 			  <<"\t Gen bbar charge: " << _bbarcharge 
-			  << '\n';
-		if (_bbarIPdistance > 0.0 
-		    && _bbarreconumber == _bbarnumber
+			  << '\n';*/
+		if (_bbarnumber >  -1
+		    //&& _bbarreconumber == _bbarnumber
 		    //&& _bbarreconumber > 2
 		    //&& _bbarptmiss < 10
 		    //&& _bbarIPdistance < 30.0
@@ -149,18 +149,19 @@ void chargeEfficiency()
 		    )
 		{
 			momentumrecototal->Fill(_bbarmomentum);
-			distrecototal->Fill(_bbarIPdistance);
+			distrecototal->Fill(_bbardistance);
 			total++;
+			std::cout << "Reco bbar charge: " << _bbarrecocharge << '\n';
 			if(_bbarrecocharge == _bbarcharge)
 			//if ((_bbarrecocharge * _bbarcharge > 0.0) || (_bbarrecocharge ==0 && _bbarcharge == 0)) 
 			{
 				momentumreco->Fill(_bbarmomentum);
-				distreco->Fill(_bbarIPdistance);
+				distreco->Fill(_bbardistance);
 				counter++;
 			}
 		}
-		if (_bIPdistance > 0.0 
-		    && _breconumber == _bnumber
+		if (_bnumber > -1
+		    //&& _breconumber == _bnumber
 		    //&& _breconumber > 2
 		    //&& _bptmiss < 10
 		    //&& _bIPdistance < 30.0
@@ -168,13 +169,13 @@ void chargeEfficiency()
 		    ) 
 		{
 			momentumrecototal->Fill(_bmomentum);
-			distrecototal->Fill(_bIPdistance);
+			distrecototal->Fill(_bdistance);
 			total++;
 			if(_brecocharge == _bcharge)
 			//if ((_brecocharge * _bcharge > 0.0) || (_brecocharge ==0 && _bcharge == 0)) 
 			{
 				momentumreco->Fill(_bmomentum);
-				distreco->Fill(_bIPdistance);
+				distreco->Fill(_bdistance);
 				counter++;
 
 			}
@@ -182,10 +183,10 @@ void chargeEfficiency()
 	}
 	gStyle->SetPalette(1);
 	c1->cd(1);
-	//momentumrecototal->Draw("p");
-	//momentumreco->Draw("same");
-	distrecototal->Draw("p");
-	distreco->Draw("same");
+	momentumrecototal->Draw("p");
+	momentumreco->Draw("same");
+	//distrecototal->Draw("p");
+	//distreco->Draw("same");
 	if (TEfficiency::CheckConsistency(*distreco, *distrecototal)) 
 	{
 		TEfficiency * eff = new TEfficiency(*distreco, *distrecototal);

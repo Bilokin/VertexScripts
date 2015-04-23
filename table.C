@@ -67,10 +67,14 @@ void table(){
 	JETS->SetBranchAddress("numberOfVertices", _nvtx);
 	JETS->SetBranchAddress("btags", _btag);
 	JETS->SetBranchAddress("mcpdg", _mctag);
-
+	
+	float _btag1 = 0.0;
+	float _bbartag1 = 0.0;
 	
 	T3->SetBranchAddress("bexists", &_bexists);
 	T3->SetBranchAddress("bbarexists", &_bbarexists);
+	T3->SetBranchAddress("btag", &_btag1);
+	T3->SetBranchAddress("bbartag", &_bbartag1);
 	T3->SetBranchAddress("bnumber", &_brecnumber);
 	T3->SetBranchAddress("bbarnumber", &_bbarrecnumber);
 	T3->SetBranchAddress("bbarptmiss", &_bbarptmiss);
@@ -146,19 +150,17 @@ void table(){
 			if (_mctag[jet] < 0) 
 			{
 				btag  = _btag[jet];
-				std::cout << "btag: " << btag << '\n';
 			}
 			if (_mctag[jet] > 0) 
 			{
 				bbartag  = _btag[jet];
-				std::cout << "bbartag: " << bbartag << '\n';
 			}
 		}
-		if (bjets < 2) 
+		if (bjets < 2 || bbartag == btag) 
 		{
-			continue;
+			//continue;
 		}
-		/*for (int j = 0; j < _vertex; j++) 
+		for (int j = 0; j < _vertex; j++) 
 		{
 			if (_pdg[j] == 5) 
 			{
@@ -170,9 +172,13 @@ void table(){
 				bbars.push_back(j);
 				bbarn += _numberOfParticles[j];
 			}
-		}*/
+		}
+		bbartag = _bbartag1;
+		btag = _btag1;
 		bn = _brecnumber;
 		bbarn = _bbarrecnumber;
+		//bn = _cnumber_f + _bnumber_f;
+		//bbarn = _cbarnumber_f + _bbarnumber_f;
 		//_btotalnumber = _bnumber + _cnumber;
 		//_bbartotalnumber = _bbarnumber + _cbarnumber;
 		if (bn > -1 && _bnumber > -1 ) 
@@ -190,11 +196,11 @@ void table(){
 			{
 				totalgood++;
 			}
-			else 
+			if (bn > _btotalnumber) 
 			{
 				std::cout << "i: " << i
 					  << " B mc: " << _btotalnumber
-					  << " B rec: " <<  _brecnumber
+					  << " B rec: " <<  bn //_brecnumber
 					  << " B rec ex: " <<  _bexists
 					  << " Bbar mc: " << _bbartotalnumber
 					  << " Bbar rec: " << _bbarrecnumber
@@ -220,7 +226,7 @@ void table(){
 		}
 		float s = 0.0;
 		if (bn > -1
-		    //&& _bnumber_f > -1
+		    && _bnumber > -1
 		    && btag > 0.3
 		    ) 
 		{
@@ -229,13 +235,13 @@ void table(){
 			{
 				aftercuts++;
 			}
-			if (bn == _bbartotalnumber) 
+			if (bn == _btotalnumber) 
 			{
 				aftercutsgood++;
 			}
 		}
 		if (bbarn > -1 
-		    //&& _bbarnumber_f > -1
+		    && _bbarnumber> -1
 		    && bbartag > 0.3
 		    ) 
 		{

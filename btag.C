@@ -13,8 +13,8 @@ void btag(){
 	c1->Divide(2,1);
 	gStyle->SetCanvasColor(kWhite);
 	gStyle->SetPadColor(kWhite);
-	TH1F * btagWith = new TH1F("da","Btag with",30,0,1.01 );
-	TH1F * btagWithout = new TH1F("db","Btag without",30,0,1.01 );
+	TH1F * btagWith = new TH1F("with_vertices","Btag with",30,0,1.01 );
+	TH1F * btagWithout = new TH1F("without_vertices","Btag without",30,0,1.01 );
 	TChain* T = new TChain("Jets");
 	T->Add("TrashRecoTest.root");
 	TChain* T1 = new TChain("Stats");

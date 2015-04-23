@@ -2,14 +2,15 @@
 #include <iostream>
 using std::cout;
 
-float sigma(float offset, float p)
+float sigma(float offset, float p, float theta)
 {
 	float a = 0.005;
 	float b = 0.01;
+	float sin43 = std::pow( std::sin(theta), 4.0/3.0);
 	//return p;
 	//return offset;
 	//return offset / a;
-	return offset /sqrt(a*a + b*b / p / p);//*1000;
+	return offset /sqrt(a*a + b*b / p / p / sin43);//*1000;
 
 }
 
@@ -24,11 +25,15 @@ void missed(){
 	float _betatrack[MAXN];
 	float _bbaretatrack[MAXN];
 	float _bptrack[MAXN];
+	float _betatrack[MAXN];
 	float _bbarptrack[MAXN];
+	float _bbaretatrack[MAXN];
 	float _coffsettrack[MAXN];
 	float _cbaroffsettrack[MAXN];
 	float _cptrack[MAXN];
+	float _cetatrack[MAXN];
 	float _cbarptrack[MAXN];
+	float _cbaretatrack[MAXN];
 	int _breconumber = 0;
 	int _bbarreconumber = 0;
 	float _bptmiss;
@@ -51,11 +56,11 @@ void missed(){
 	float maxep = 0.50;
 	TH2F * lostpt = new TH2F("pelost","Lostpe", nbin,0, maxp, nbin, 0, maxep);
 	TH2F * goodpt = new TH2F("pegood","goodpe", nbin,0, maxp, nbin, 0, maxep);
-	int nbine = 50;
+	int nbine = 30;
 	float maxe = nbine;	
-	TH1F * esmissed = new TH1F("ep", "#epsilon / #sigma", nbine,0.0, maxe);
-	TH1F * esgood = new TH1F("epgood", "#epsilon / #sigma", nbine,0.0, maxe);
-	TH1F * esprime = new TH1F("epprime", "#epsilon / #sigma", nbine,0.0, maxe);
+	TH1F * esmissed = new TH1F("ep", "#epsilon / #sigma;#epsilon / #sigma", nbine,0.0, maxe);
+	TH1F * esgood = new TH1F("epgood", "#epsilon / #sigma;#epsilon / #sigma", nbine,0.0, maxe);
+	TH1F * esprime = new TH1F("epprime", "#epsilon / #sigma;#epsilon / #sigma", nbine,0.0, maxe);
 	esmissed->Sumw2();
 	esprime->Sumw2();
 	//esgood->Sumw2();
@@ -69,6 +74,8 @@ void missed(){
 	T2->Add("TrashMCTest.root");
 	TChain* T3 = new TChain("MissedTracks");
 	T3->Add("TrashRecoTest.root");
+	TChain* T5 = new TChain("MissedVertex");
+	T5->Add("TrashRecoTest.root");
 	TChain* T4 = new TChain("Primaries");
 	T4->Add("VertexRestorer.root");
 
@@ -82,11 +89,15 @@ void missed(){
 	T->SetBranchAddress("betatrack", _betatrack);
 	T->SetBranchAddress("bbaretatrack", _bbaretatrack);
 	T->SetBranchAddress("bptrack", _bptrack);
+	T->SetBranchAddress("betatrack", _betatrack);
 	T->SetBranchAddress("bbarptrack", _bbarptrack);
+	T->SetBranchAddress("bbaretatrack", _bbaretatrack);
 	T->SetBranchAddress("coffsettrack", _coffsettrack);
 	T->SetBranchAddress("cbaroffsettrack", _cbaroffsettrack);
 	T->SetBranchAddress("cptrack", _cptrack);
+	T->SetBranchAddress("cetatrack", _cetatrack);
 	T->SetBranchAddress("cbarptrack", _cbarptrack);
+	T->SetBranchAddress("cbaretatrack", _cbaretatrack);
 
 	T2->SetBranchAddress("tag", &_tag);
 	T2->SetBranchAddress("bIPdistance", &_bIPdistance);
@@ -101,6 +112,18 @@ void missed(){
 	T3->SetBranchAddress("offsetMissed", _offsetMissed);
 	T3->SetBranchAddress("momentumMissed", _momentumMissed);
 	T3->SetBranchAddress("thetaMissed", _thetaMissed);
+	int _numberOfMissedVtx = 0;
+	int _numberOfTracksVtx[MAXN];
+	float _offsetMissedVtx[MAXN];//[MAXN];
+	float _momentumMissedVtx[MAXN];//[MAXN];
+	float _costhetaMissedVtx[MAXN];//[MAXN];
+
+	T5->SetBranchAddress("numberOfMissedVtx",&_numberOfMissedVtx);
+	T5->SetBranchAddress("numberOfTracksMissedVtx", _numberOfTracksVtx);
+	T5->SetBranchAddress("offsetOfParticlesVtx", _offsetMissedVtx);
+	T5->SetBranchAddress("momentumOfParticlesVtx", _momentumMissedVtx);
+	T5->SetBranchAddress("costhetaOfParticlesVtx", _costhetaMissedVtx);
+	//T5->SetBranchAddress("thetaMissedVtx", _thetaMissedVtx);
 	int _nprime = 0;
 	float _primeDeviation[MAXN];
 	T4->SetBranchAddress("primariesTotal", &_nprime);
@@ -108,6 +131,8 @@ void missed(){
 	cout << "mTotalNumberOfEvents: " << mTotalNumberOfEvents << '\n';
 	int counter = 0;
 	int num = 0;
+	TFile * file = TFile::Open("TrashRecoTest.root");
+	//MissedVertex->Project("sigma(offsetOfParticlesVtx, momentumOfParticlesVtx, acos(costhetaOfParticlesVtx)) >> +ep" , "offsetOfParticlesVtx > 0.0");
 	for (unsigned int i = 0; i < mTotalNumberOfEvents; i += 1)
 	{
 		T->GetEntry(i);
@@ -115,6 +140,7 @@ void missed(){
 		T2->GetEntry(i);
 		T3->GetEntry(i);
 		T4->GetEntry(i);
+		T5->GetEntry(i);
 		if (_breconumber > 15) 
 		{
 		//	continue;
@@ -123,23 +149,31 @@ void missed(){
 		{
 			continue;
 		}
-		for (int j = 0; j < _numberOfMissed; j++)
+		for (int j = 0; j < _numberOfMissedVtx; j++) 
 		{
-			esmissed->Fill(sigma(_offsetMissed[j], _momentumMissed[j])); 
-			if (sigma(_offsetMissed[j],_momentumMissed[j]) < 1.0) 
+			for (int k = 0; k < _numberOfTracksVtx[j]; k++) 
 			{
+				if (_offsetMissedVtx[j*20+k] < -0.9) 
+				{
+					continue;
+				}
+					//cout << "Event: " << i << " i " << j << " k " << k <<" number: " << _numberOfTracksVtx[j] << " offset: " << _offsetMissedVtx[j][k] << " cos: " << _costhetaMissedVtx[j][k] << "\n";
+				if (_offsetMissedVtx[j*20+k] <= 0.000000000000000) 
+				{
+					continue;
+				}
+				esmissed->Fill(sigma(_offsetMissedVtx[j*20+k], _momentumMissedVtx[j*20+k], std::acos(_costhetaMissedVtx[j*20+k])));
 			}
-			//cout << _offsetMissed[j] / sigma(_momentumMissed[j]) << endl;
-			if (_numberOfMissed > 3) 
-			{
-	//			continue;
-			}
-			lostpt->Fill(_momentumMissed[j], _offsetMissed[j]);
+		}
+		for (int s = 0; s < _numberOfMissed; s++)
+		{
+			esmissed->Fill(sigma(_offsetMissed[s], _momentumMissed[s], _thetaMissed[s])); 
+			lostpt->Fill(_momentumMissed[s], _offsetMissed[s]);
 		}
 		for (int k = 0; k < _nprime; k++) 
 		{
 			esprime->Fill(_primeDeviation[k]);
-			cout << "Event: " << i << " track: " << k << " p: " << _primeDeviation[k] << endl;
+			//cout << "Event: " << i << " track: " << k << " p: " << _primeDeviation[k] << endl;
 		}
 		if (_bnumber > 0)// && _bnumber > 15) 
 		{
@@ -147,13 +181,13 @@ void missed(){
 			{
 				goodpt->Fill(_bptrack[k], _boffsettrack[k]);
 				//goodpt->Fill(_bIPdistance, _boffsettrack[k]);
-				esgood->Fill(sigma(_boffsettrack[k] , _bptrack[k]));
+				esgood->Fill(sigma(_boffsettrack[k] , _bptrack[k], _betatrack[k]));
 			}
 			for (int n = 0; n < _cnumber; n++) 
 			{
 				goodpt->Fill(_cptrack[n], _coffsettrack[n]);
 				//goodpt->Fill(_bIPdistance, _coffsettrack[n]);
-				esgood->Fill(sigma(_coffsettrack[n], _cptrack[n]));
+				esgood->Fill(sigma(_coffsettrack[n], _cptrack[n], _cetatrack[n]));
 			}
 		}
 		if (_bbarnumber > 0)// || _bbarnumber > 15) 
@@ -163,13 +197,13 @@ void missed(){
 				//goodpt->Fill(_bbarIPdistance, _bbaroffsettrack[m]);
 				goodpt->Fill(_bbarptrack[m], _bbaroffsettrack[m]);
 				//esgood->Fill(_bbaroffsettrack[m] / sigma(_bbarptrack[m]));
-				esgood->Fill(sigma(_bbaroffsettrack[m], _bbarptrack[m]));
+				esgood->Fill(sigma(_bbaroffsettrack[m], _bbarptrack[m], _bbaretatrack[m]));
 			}
 			for (int o = 0; o < _cbarnumber; o++) 
 			{
 				//goodpt->Fill(_bbarIPdistance, _cbaroffsettrack[o]);
 				goodpt->Fill(_cbarptrack[o], _cbaroffsettrack[o]);
-				esgood->Fill(sigma(_cbaroffsettrack[o], _cbarptrack[o]));
+				esgood->Fill(sigma(_cbaroffsettrack[o], _cbarptrack[o], _cbaretatrack[o]));
 			}
 		}
 	}
@@ -194,15 +228,16 @@ void missed(){
 	//esprime->Scale(esgood->GetBinContent(1)/esprime->GetBinContent(1));
 	//esmissed->SetMaximum(1200);
 	//esgood->SetMaximum(1200);
-	esgood->SetFillColor(kGray);
+	esgood->SetFillColor(kGreen);
+	esgood->SetLineWidth(1);
 esgood->Draw("same");
 	esmissed->Draw("samep");
 	esprime->Draw("samep");
 	TLegend *legendMean = new TLegend(0.17,0.7,0.5,0.92,NULL,"brNDC");
         legendMean->SetFillColor(kWhite);
         legendMean->SetBorderSize(0);
-        legendMean->AddEntry(esgood,"secondary tracks","fp");
-        legendMean->AddEntry(esmissed,"missed tracks","fp");
+        legendMean->AddEntry(esgood,"generated SOT-Tracks","fp");
+        legendMean->AddEntry(esmissed,"LSOT-Tracks","fp");
         legendMean->AddEntry(esprime,"primary tracks","fp");
 	legendMean->Draw();
 	gPad->Modified();
