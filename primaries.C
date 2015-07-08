@@ -1,0 +1,76 @@
+
+void primaries()
+{
+	TFile * file2 = TFile::Open("VertexRestorer.root");
+	TTree * prime = Primaries;
+	int bin_e = 100;
+	float max_e =1.0;
+	float max_es =1.0;
+	TH1F * offsetf = new TH1F("offsetf", ";#epsilon", bin_e,0.0,max_e);
+	TH1F * offset6 = new TH1F("offset6", ";#epsilon", bin_e,0.0,max_e);
+	TH1F * offset0 = new TH1F("offset0", ";#epsilon", bin_e,0.0,max_e);
+	TH1F * doffsetf = new TH1F("doffsetf", ";#epsilon", bin_e,0.0,max_es/5.0);
+	TH1F * doffset6 = new TH1F("doffset6", ";#epsilon", bin_e,0.0,max_es/5.0);
+	TH1F * doffset0 = new TH1F("doffset0", ";#epsilon", bin_e,0.0,max_es/5.0);
+	TH1F * deviationf = new TH1F("deviationf", ";#sigma", bin_e,0.0,max_e);
+	TH1F * deviation6 = new TH1F("deviation6", ";#sigma", bin_e,0.0,max_e);
+	TH1F * deviation0 = new TH1F("deviation0", ";#sigma", bin_e,0.0,max_e);
+	prime->Project("offsetf", "primeOffset", "primeOffset > 0");
+	prime->Project("offset0", "primeOffset", "primeOffset > 0 && primeVtxHits < 4");
+	prime->Project("offset6", "primeOffset", "primeOffset > 0 && primeVtxHits > 3");
+	/*prime->Project("offsetf", "primeOffset/primeError", "primeError > 0");
+	prime->Project("offset0", "primeOffset/primeError", "primeError > 0 && primeVtxHits == 0");
+	prime->Project("offset6", "primeOffset/primeError", "primeError > 0 && primeVtxHits == 6");
+	*/prime->Project("doffsetf", "primeTeorError", "primeError > 0");
+	prime->Project("doffset0", "primeTeorError", "primeError > 0 && primeVtxHits < 4");
+	prime->Project("doffset6", "primeTeorError", "primeError > 0 && primeVtxHits > 3");
+
+	prime->Project("deviationf","primeError" ,"primeOffset > 0");
+	prime->Project("deviation6","primeError" ,"primeOffset > 0 && primeVtxHits > 3");
+	prime->Project("deviation0","primeError" ,"primeOffset > 0 && primeVtxHits < 4");
+	//file2->Close();
+	TFile * file = TFile::Open("TrashRecoTest.root");
+	TCanvas * c1 = new TCanvas("c1", "Data-MC",0,0,1200,500);
+	c1->Divide(3,1);
+	c1->cd(1);
+	gPad->SetLogy();
+	doffsetf->SetLineWidth(3);
+	doffset0->SetLineWidth(3);
+	doffset6->SetLineWidth(3);
+	doffset6->SetLineColor(kBlue+1);
+	doffset0->SetLineColor(kGreen);
+	THStack * ostack = new THStack("os","DBD approximation;#sigma_{DBD}");
+	ostack->Add(doffset0);
+	ostack->Add(doffset6);
+	ostack->Draw();
+	//doffsetf->Draw("samee");
+	c1->cd(2);
+	gPad->SetLogy();
+	deviationf->SetLineWidth(3);
+	deviation0->SetLineWidth(3);
+	deviation6->SetLineWidth(3);
+	deviation6->SetLineColor(kBlue+1);
+	deviation0->SetLineColor(kGreen);
+	//deviation0->SetFillColor(kYellow);
+	//deviation6->SetFillColor(kBlue);
+
+	//deviationf->Draw();
+	THStack * dstack = new THStack("ds","Covariance matrix error;#sigma_{matrix}");
+	dstack->Add(deviation0);
+	dstack->Add(deviation6);
+	//deviation6->Draw("same");
+	//deviation0->Draw("same");
+	dstack->Draw("");
+	c1->cd(3);
+	gPad->SetLogy();
+	offsetf->SetLineWidth(3);
+	offset0->SetLineWidth(3);
+	offset6->SetLineWidth(3);
+	offset6->SetLineColor(kBlue+1);
+	offset0->SetLineColor(kGreen);
+	THStack * dostack = new THStack("dos","Offset;#epsilon");
+	dostack->Add(offset0);
+	dostack->Add(offset6);
+	dostack->Draw();
+	//offsetf->Draw("samee");
+}

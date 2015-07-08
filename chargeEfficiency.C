@@ -11,22 +11,51 @@ float getDistance(float * v1, float * v2, int number)
 
 	return sqrt(diff);
 }
-void chargeEfficiency()
+TEfficiency * getEfficiency(TH1 * good, TH1 * total, bool same, int color, string title)
+{
+	if (TEfficiency::CheckConsistency(*good, *total)) 
+	{
+		TEfficiency * eff2 = new TEfficiency(*good, *total);
+	}
+	eff2->SetTitle(title.c_str());
+	eff2->SetLineColor(color);
+	eff2->SetMarkerSize(0.5);
+
+	eff2->SetMarkerStyle(20);
+	eff2->SetMarkerColor(color);
+	string draw = (same)? "Psame": "AP";
+	eff2->Draw(draw.c_str());
+	
+}
+void chargeEfficiency(string recofilename = "TrashRecoTest.root", int color = kBlack, TCanvas * c1 = NULL)
+//void chargeEfficiency()
 {
 	//gStyle->SetCanvasPreferGL(kTRUE);
 	int bin_e = 6;
 	int max_e = 3;
-	TCanvas * c1 = new TCanvas("c1", "Data-MC",0,0,1000,500);
-	c1->Divide(2,1);
+	bool same = true;
+	if (!c1) 
+	{
+		c1 = new TCanvas("c1", "Data-MC",0,0,800,800);
+		c1->Divide(2,2);
+		same = false;
+	}
 	TH1F * chargemc = new TH1F("distmc", "Generator charge", bin_e,-3,max_e);
 	TH1F * chargereco = new TH1F("distreco", "Reconstructed charge", bin_e,-3,max_e);
-	int nbins = 30;
-	int maxp = 165;
+	int nbins = 25;
+	int maxp = 120;
 	int maxd = 20;
 	TH1F * momentumreco = new TH1F("numberreco2", "Reconstructed particles", nbins,0,maxp);
 	TH1F * momentumrecototal = new TH1F("numbercreco", "Reconstructed particles", nbins,0,maxp);
 	TH1F * distreco = new TH1F("disteco2", "Reconstructed particles", nbins,0,maxd);
 	TH1F * distrecototal = new TH1F("distreco", "Reconstructed particles", nbins,0,maxd);
+	TH1F * btagreco = new TH1F("breco2", "Reconstructed particles", nbins,0,1);
+	TH1F * btagrecototal = new TH1F("breco", "Reconstructed particles", nbins,0,1);
+	TH1F * numberreco = new TH1F("bn2", "Reconstructed particles", 12,0,12);
+	TH1F * numberrecototal = new TH1F("bn", "Reconstructed particles", 12,0,12);
+	TH1F * numbergen = new TH1F("bgenn2", "Reconstructed particles", 12,0,12);
+	TH1F * numbergentotal = new TH1F("bgenn", "Reconstructed particles", 12,0,12);
+
 
 	chargereco->Sumw2();
 	chargemc->Sumw2();
@@ -35,7 +64,7 @@ void chargeEfficiency()
 	//TChain* MC = new TChain("Vertices");
 	//MC->Add("TrashMCTest.root");
 	TChain* RECO = new TChain("Stats");
-	RECO->Add("TrashRecoTest.root");
+	RECO->Add(recofilename.c_str());
 	int _numberOfVertexes = 0;
 	int _tag = 0;
 	float _coordinates[MAXV][3];
@@ -64,6 +93,8 @@ void chargeEfficiency()
 	float _bbarteta = 0.0;
 	int _breconumber = 0;
 	int _bbarreconumber = 0;
+	float _btag = 0.0;
+	float _bbartag = 0.0;
 
 	//MC2->SetBranchAddress("bmomentum", &_bmomentum);
 	//MC2->SetBranchAddress("bbarmomentum", &_bbarmomentum);
@@ -71,8 +102,8 @@ void chargeEfficiency()
 	//MC2->SetBranchAddress("bbardistance", &_bbardistance);
 	MC2->SetBranchAddress("bcharge", &_bcharge);
 	MC2->SetBranchAddress("bbarcharge", &_bbarcharge);
-	MC2->SetBranchAddress("bnumber", &_bnumber);
-	MC2->SetBranchAddress("bbarnumber", &_bbarnumber);
+	MC2->SetBranchAddress("btotalnumber", &_bnumber);
+	MC2->SetBranchAddress("bbartotalnumber", &_bbarnumber);
 	MC2->SetBranchAddress("cbarnumber", &_cbarnumber);
 	MC2->SetBranchAddress("cnumber", &_cnumber);
 	MC2->SetBranchAddress("bIPdistance", &_bdistance);
@@ -101,6 +132,8 @@ void chargeEfficiency()
 	RECO->SetBranchAddress("bbarcharge", &_bbarrecocharge);
 	RECO->SetBranchAddress("bnumber", &_breconumber);
 	RECO->SetBranchAddress("bbarnumber", &_bbarreconumber);
+	RECO->SetBranchAddress("btag", &_btag);
+	RECO->SetBranchAddress("bbartag", &_bbartag);
 	int mTotalNumberOfEvents1 = MC2->GetEntries();
 	int counter = 0;
 	int total = 0;
@@ -113,69 +146,55 @@ void chargeEfficiency()
 		//chargemc->Fill(bbarcharge);
 		bool bexist = false;
 		bool bbarexist = false;
-		/*for (int j = 0; j < _numberOfTagged; j++) 
-		{
-			if (_PDGreco[j] == 5) 
-			{
-				recobcharge += _chargereco[j];
-				bexist = true;
-			}
-			if (_PDGreco[j] == -5) 
-			{
-				recobbarcharge += _chargereco[j];
-				bbarexist = true;
-			}
-		}
-		if (!bexist && !bbarexist) 
-		{
-			continue;
-		}*/
-		std::cout << "i: " << k << '\n';
-
-	/*	std::cout << "Reco b charge: " << _brecocharge 
-			  << '(' << bexist << ')'
-			  <<"\t Gen b charge: " << _bcharge 
-			  << '\n';
-		std::cout << "Reco bbar charge: " << _bbarrecocharge 
-			  << '(' << bbarexist << ')'
-			  <<"\t Gen bbar charge: " << _bbarcharge 
-			  << '\n';*/
+		//std::cout << "i: " << k << '\n';
 		if (_bbarnumber >  -1
-		    //&& _bbarreconumber == _bbarnumber
-		    //&& _bbarreconumber > 2
-		    //&& _bbarptmiss < 10
-		    //&& _bbarIPdistance < 30.0
-		    //&& ( _bbarmomentum > (_bbarteta-1.57)*(_bbarteta-1.57)*10.0+10.0  )
+		   // && _bbarreconumber == _bbarnumber
+		    //&&_bbarmomentum > 15
+		    //&&_bbartag > 0.3
+		    //&& _bbarreconumber < 7
+		    && _bbarreconumber > 0
 		    )
 		{
 			momentumrecototal->Fill(_bbarmomentum);
 			distrecototal->Fill(_bbardistance);
+			btagrecototal->Fill(_bbartag);
+			numbergentotal->Fill(_bbarnumber);
+			numberrecototal->Fill(_bbarreconumber);
 			total++;
-			std::cout << "Reco bbar charge: " << _bbarrecocharge << '\n';
-			if(_bbarrecocharge == _bbarcharge)
-			//if ((_bbarrecocharge * _bbarcharge > 0.0) || (_bbarrecocharge ==0 && _bbarcharge == 0)) 
+			//std::cout << "Reco bbar charge: " << _bbarrecocharge << '\n';
+			//if(_bbarrecocharge == _bbarcharge)
+			if ((_bbarrecocharge * _bbarcharge > 0.0) || (_bbarrecocharge ==0 && _bbarcharge == 0)) 
 			{
 				momentumreco->Fill(_bbarmomentum);
 				distreco->Fill(_bbardistance);
+				btagreco->Fill(_bbartag);
+				numbergen->Fill(_bbarnumber);
+				numberreco->Fill(_bbarreconumber);
 				counter++;
 			}
 		}
-		if (_bnumber > -1
-		    //&& _breconumber == _bnumber
-		    //&& _breconumber > 2
-		    //&& _bptmiss < 10
-		    //&& _bIPdistance < 30.0
-		    //&& ( _bmomentum > (_bteta-1.57)*(_bteta-1.57)*10.0+10.  )
+		if (_bnumber > -1 
+		    //&& _breconumber == _bbarnumber
+		    //&& _bmomentum > 15
+		    //&& _btag > 0.3
+		    //&& _breconumber < 7
+		    && _breconumber > 0
 		    ) 
 		{
 			momentumrecototal->Fill(_bmomentum);
 			distrecototal->Fill(_bdistance);
+			btagrecototal->Fill(_btag);
+			numbergentotal->Fill(_bnumber);
+			numberrecototal->Fill(_breconumber);
 			total++;
-			if(_brecocharge == _bcharge)
-			//if ((_brecocharge * _bcharge > 0.0) || (_brecocharge ==0 && _bcharge == 0)) 
+			//if(_brecocharge == _bcharge)
+			if ((_brecocharge * _bcharge > 0.0) || (_brecocharge ==0 && _bcharge == 0)) 
 			{
 				momentumreco->Fill(_bmomentum);
 				distreco->Fill(_bdistance);
+				btagreco->Fill(_btag);
+				numberreco->Fill(_breconumber);
+				numbergen->Fill(_bnumber);
 				counter++;
 
 			}
@@ -183,24 +202,18 @@ void chargeEfficiency()
 	}
 	gStyle->SetPalette(1);
 	c1->cd(1);
-	momentumrecototal->Draw("p");
-	momentumreco->Draw("same");
+	//momentumrecototal->Draw("p");
+	//momentumreco->Draw("same");
 	//distrecototal->Draw("p");
 	//distreco->Draw("same");
-	if (TEfficiency::CheckConsistency(*distreco, *distrecototal)) 
-	{
-		TEfficiency * eff = new TEfficiency(*distreco, *distrecototal);
-	}
-	eff->SetTitle("Charge efficiency;d_{BD};#epsilon(d_{BD})");
-	eff->Draw("AP");
+	getEfficiency(btagreco, btagrecototal, same, color, "Purity by btag;btag;#epsilon(btag)");
 	c1->cd(2);
+	getEfficiency(momentumreco, momentumrecototal, same, color, "Purity by momentum;|p|_{B};#epsilon(|p|_{B})");
+	c1->cd(3);
+	getEfficiency(numberreco, numberrecototal, same, color, "Purity by N_{reco};N_{reco};#epsilon(N_{reco})");
+
+	c1->cd(4);
+	getEfficiency(numbergen, numbergentotal, same, color,  "Purity by N_{gen};N_{gen};#epsilon(N_{gen})");
 	std::cout << "Correct charge : " << counter << " out of " << total << " (" << (float)counter/(float)total*100. << "%)" <<'\n';
 	//chargereco->Draw("psame");
-	if (TEfficiency::CheckConsistency(*momentumreco, *momentumrecototal)) 
-	{
-		TEfficiency * eff = new TEfficiency(*momentumreco, *momentumrecototal);
-	}
-	eff->SetTitle("Charge efficiency;|p|_{B};#epsilon(|p|_{B})");
-	eff->Draw("AP");
-	
 }

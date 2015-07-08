@@ -34,7 +34,7 @@ void OneTrack2()
 	//normaltree->Draw("costhetaMissedVtx >> cosOtherLow","numberOfTracksMissedVtx > 1 && momentumMissedVtx < 15.0 && distanceMissedVtx > 0.8");
 	normaltree->Draw("costhetaMissedVtx >> cosOtherHigh","numberOfTracksMissedVtx > 1 && momentumMissedVtx > 15.0 && distanceMissedVtx > 1.0");
 	normaltree->Draw("costhetaMissedVtx >> cosOtherLowDist","numberOfTracksMissedVtx > 1 && ( momentumMissedVtx < 15.0 || distanceMissedVtx < 1.0)");
-	THStack * stack = new THStack("stack","Missed vertex");
+	THStack * stack = new THStack("stack","LSOT Vertex");
 	//stack->Add(cosOtherLow);
 	stack->Add(cosOtherLowDist);
 	stack->Add(cosOne);
@@ -53,30 +53,51 @@ void OneTrack2()
 	c1->cd(1);
 	TTree * tree = MissedTracks;
 	//TH1F * cosLowtr = new TH1F("cosLowtr", "tracks", bin_e,-1.0,max_e);
-	TH1F * cosHightr = new TH1F("cosHightr", "tracks", bin_e,-1.0,max_e);
-	TH1F * cosOffsetHightr = new TH1F("cosOffsetHightr", "tracks", bin_e,-1.0,max_e);
-	cosHightr->SetLineColor(kRed);
-	cosHightr->SetLineWidth(3);
+	TH1F * cosGoodTracks = new TH1F("cosGoodTracks", "tracks", bin_e,-1.0,max_e);
+	TH1F * cosNoPFO = new TH1F("cosNoPFO", "tracks", bin_e,-1.0,max_e);
+	TH1F * cosNoVTX = new TH1F("cosNoVTX", "tracks", bin_e,-1.0,max_e);
+	TH1F * cosNoTrack = new TH1F("cosNoTrack", "tracks", bin_e,-1.0,max_e);
+	cosGoodTracks->SetLineColor(kRed);
+	cosGoodTracks->SetLineWidth(3);
+	cosNoVTX->SetLineColor(kBlue);
+	cosNoVTX->SetLineWidth(3);
+	cosNoTrack->SetLineColor(kBlack);
+	cosNoTrack->SetLineWidth(3);
 	//cosLowtr->SetLineColor(kMagenta);
 	//cosLowtr->SetLineWidth(3);
-	cosOffsetHightr->SetLineColor(kGreen);
-	cosOffsetHightr->SetLineWidth(3);
-	//tree->Draw("costhetaMissed >> cosHightr","momentumMissed > 1.0 && offsetMissed > 3*sqrt(0.005*0.005+0.01*0.01/momentumMissed/momentumMissed)");
-	tree->Draw("costhetaMissed >> cosHightr","momentumMissed > 1.0 && offsetMissed >0.015");
+	cosNoPFO->SetLineColor(kGreen);
+	cosNoPFO->SetLineWidth(3);
+	//tree->Draw("costhetaMissed >> cosGoodTracks","momentumMissed > 1.0 && offsetMissed > 3*sqrt(0.005*0.005+0.01*0.01/momentumMissed/momentumMissed)");
+	tree->Draw("costhetaMissed >> cosGoodTracks","isrecoMissed > 0 && vtxHitsMissed > 3");
 	//tree->Draw("costhetaMissed >> cosLowtr","momentumMissed < 1.0 && offsetMissed > 0.015");
-	tree->Draw("costhetaMissed >> cosOffsetHightr","momentumMissed < 1.0 || offsetMissed < 0.015");
-	THStack * stack = new THStack("stack2","Accidental tracks");
+	tree->Draw("costhetaMissed >> cosNoPFO","isrecoMissed == 0 && hastrackMissed == 1 && vtxHitsMissed > 3");
+	tree->Draw("costhetaMissed >> cosNoTrack","hastrackMissed == 0");
+	tree->Draw("costhetaMissed >> cosNoVTX"," vtxHitsMissed < 4 && hastrackMissed == 1");
+	THStack * stack = new THStack("stack2","LSOT-VTX tracks");
 	//stack->Add(cosLowtr);
-	stack->Add(cosOffsetHightr);
-	stack->Add(cosHightr);
+	stack->Add(cosNoTrack);
+	stack->Add(cosNoVTX);
+	stack->Add(cosNoPFO);
+	stack->Add(cosGoodTracks);
 	stack->Draw();
 	TLegend *legendMean2 = new TLegend(0.17,0.7,0.5,0.92,NULL,"brNDC");
         legendMean2->SetFillColor(kWhite);
         legendMean2->SetBorderSize(0);
-        legendMean2->AddEntry(cosHightr,"#epsilon > 15 #mum and |p| > 1 GeV","fp");
-        legendMean2->AddEntry(cosOffsetHightr,"#epsilon < 15 #mum or |p| < 1 GeV","fp");
+        legendMean2->AddEntry(cosGoodTracks,"Recoverable","fp");
+        legendMean2->AddEntry(cosNoPFO,"Nonreconstructed PFO","fp");
+        legendMean2->AddEntry(cosNoVTX,"No hits in VXD","fp");
+        legendMean2->AddEntry(cosNoTrack,"No tracking information","fp");
 	legendMean2->Draw();
 	stack2->GetXaxis()->SetTitle("cos#theta");
 	gPad->Modified();
+	std::cout << "Vertex total: " << cosNoTrack->Integral()+cosNoVTX->Integral()+cosNoPFO->Integral()+cosGoodTracks->Integral()
+		  << " no track: " << cosNoTrack->Integral()
+		  << " no vxd hits: " << cosNoVTX->Integral()
+		  << " recoverable: " <<  cosGoodTracks->Integral()// +cosNoPFO->Integral()
+		  << " \n";
+	std::cout << "Novertex total: " << cosOne->Integral()+cosOtherLowDist->Integral()+cosOtherHigh->Integral()
+		  << " one track: " << cosOne->Integral()
+		  << " others: " << cosOtherLowDist->Integral()+cosOtherHigh->Integral()
+		  << " \n";
 	//tree->Draw("costhetaMissed >> cosAll","","same");
 }

@@ -7,10 +7,9 @@ float sigma(float offset, float p, float theta)
 	float a = 0.005;
 	float b = 0.01;
 	float sin43 = std::pow( std::sin(theta), 4.0/3.0);
-	//return p;
-	//return offset;
+	return offset;
 	//return offset / a;
-	return offset /sqrt(a*a + b*b / p / p / sin43);//*1000;
+	//return offset /sqrt(a*a + b*b / p / p / sin43);//*1000;
 
 }
 
@@ -46,8 +45,8 @@ void missed(){
 	float _bprobmean;
 	float _bchimean;
 	gStyle->SetPalette(1);
-	TCanvas * c1 = new TCanvas("c1", "The 3d view",0,0,1000,500);
-	c1->Divide(2,1);
+	TCanvas * c1 = new TCanvas("c1", "The 3d view",0,0,500,500);
+	c1->Divide(1,2,0,0);
 	gStyle->SetCanvasColor(kWhite);
 	gStyle->SetPadColor(kWhite);
 	int nbin = 50;
@@ -56,13 +55,15 @@ void missed(){
 	float maxep = 0.50;
 	TH2F * lostpt = new TH2F("pelost","Lostpe", nbin,0, maxp, nbin, 0, maxep);
 	TH2F * goodpt = new TH2F("pegood","goodpe", nbin,0, maxp, nbin, 0, maxep);
-	int nbine = 30;
-	float maxe = nbine;	
-	TH1F * esmissed = new TH1F("ep", "#epsilon / #sigma;#epsilon / #sigma", nbine,0.0, maxe);
-	TH1F * esgood = new TH1F("epgood", "#epsilon / #sigma;#epsilon / #sigma", nbine,0.0, maxe);
-	TH1F * esprime = new TH1F("epprime", "#epsilon / #sigma;#epsilon / #sigma", nbine,0.0, maxe);
+	int nbine = 50;
+	float maxe = 10;	
+	TH1F * esmissed = new TH1F("ep", ";#epsilon ", nbine,0.0, maxe);
+	TH1F * esgood = new TH1F("epgood", ";#epsilon ", nbine,0.0, maxe);
+	TH1F * esprime = new TH1F("epprime", ";#epsilon / #sigma", nbine,0.0, maxe);
+	TH1F * espur = new TH1F("epprime", ";#epsilon / #sigma", nbine,0.0, maxe);
 	esmissed->Sumw2();
 	esprime->Sumw2();
+	espur->Sumw2();
 	//esgood->Sumw2();
 	goodpt->Sumw2();
 	lostpt->Sumw2();
@@ -78,6 +79,8 @@ void missed(){
 	T5->Add("TrashRecoTest.root");
 	TChain* T4 = new TChain("Primaries");
 	T4->Add("VertexRestorer.root");
+	TChain* T6 = new TChain("Purgatory");
+	T6->Add("VertexRestorer.root");
 
 	int mTotalNumberOfEvents = T->GetEntries();
 	T->SetBranchAddress("bnumber", &_bnumber);
@@ -126,8 +129,24 @@ void missed(){
 	//T5->SetBranchAddress("thetaMissedVtx", _thetaMissedVtx);
 	int _nprime = 0;
 	float _primeDeviation[MAXN];
+	float _primeOffset[MAXN];
+	float _primeTeorError[MAXN];
+	int _primeVtxHits[MAXN];
 	T4->SetBranchAddress("primariesTotal", &_nprime);
 	T4->SetBranchAddress("primeDeviation", _primeDeviation);
+	T4->SetBranchAddress("primeOffset", _primeOffset);
+	T4->SetBranchAddress("primeTeorError", _primeTeorError);
+	T4->SetBranchAddress("primeVtxHits", _primeVtxHits);
+	int _npur = 0;
+	float _purgatoryDeviation[MAXN];
+	float _purgatoryTeorError[MAXN];
+	float _purgatoryOffset[MAXN];
+	int _purgatoryVtxHits[MAXN];
+	T6->SetBranchAddress("purgatoryTotal", &_npur);
+	T6->SetBranchAddress("purgatoryDeviation", _purgatoryDeviation);
+	T6->SetBranchAddress("purgatoryOffset", _purgatoryOffset);
+	T6->SetBranchAddress("purgatoryTeorError", _purgatoryTeorError);
+	T6->SetBranchAddress("purgatoryVtxHits", _purgatoryVtxHits);
 	cout << "mTotalNumberOfEvents: " << mTotalNumberOfEvents << '\n';
 	int counter = 0;
 	int num = 0;
@@ -141,6 +160,7 @@ void missed(){
 		T3->GetEntry(i);
 		T4->GetEntry(i);
 		T5->GetEntry(i);
+		T6->GetEntry(i);
 		if (_breconumber > 15) 
 		{
 		//	continue;
@@ -170,10 +190,27 @@ void missed(){
 			esmissed->Fill(sigma(_offsetMissed[s], _momentumMissed[s], _thetaMissed[s])); 
 			lostpt->Fill(_momentumMissed[s], _offsetMissed[s]);
 		}
+		for (int k = 0; k < _npur; k++) 
+		{
+			//espur->Fill(_purgatoryDeviation[k]);
+			//espur->Fill(_purgatoryOffset[k]/_purgatoryTeorError[k]);
+			//if (_purgatoryVtxHits[k] > 3 ) 
+			{
+				//espur->Fill(_purgatoryOffset[k]/_purgatoryTeorError[k]);
+				espur->Fill(_purgatoryOffset[k]);
+				//cout << "Event: " << i << " track: " << k << " p: " << _purgatoryVtxHits[k] << endl;
+			}
+		}
 		for (int k = 0; k < _nprime; k++) 
 		{
-			esprime->Fill(_primeDeviation[k]);
-			//cout << "Event: " << i << " track: " << k << " p: " << _primeDeviation[k] << endl;
+			//if (_primeVtxHits[k] > 3) 
+			{
+				//esprime->Fill(_primeOffset[k]/_primeTeorError[k]);
+				esprime->Fill(_primeOffset[k]);
+				//esprime->Fill(_primeDeviation[k]);
+			}
+			//esprime->Fill(_primeOffset[k]);
+	//		cout << "Event: " << i << " track: " << k << " p: " << _primeVtxHits[k] << endl;
 		}
 		if (_bnumber > 0)// && _bnumber > 15) 
 		{
@@ -220,32 +257,49 @@ void missed(){
 	gPad->SetGridy();
 	gPad->SetLogy();
 	gPad->SetGridx();
-	esmissed->SetMarkerStyle(20);
-	esmissed->SetMarkerSize(0.4);
+	//esmissed->SetMarkerStyle(20);
+	//esmissed->SetMarkerSize(0.4);
+	TH1F* dividend=new TH1F(*esmissed);
+	esmissed->SetLineColor(kRed);
+	esmissed->SetLineWidth(3);
+	espur->SetMarkerStyle(22);
+	espur->SetMarkerSize(1.2);
+	espur->SetMarkerColor(kRed+1);
+
 	esprime->SetMarkerStyle(21);
 	esprime->SetMarkerSize(1.0);
-	esprime->SetMarkerColor(kRed);
+	esprime->SetMarkerColor(kRed+2);
 	//esprime->Scale(esgood->GetBinContent(1)/esprime->GetBinContent(1));
 	//esmissed->SetMaximum(1200);
 	//esgood->SetMaximum(1200);
 	esgood->SetFillColor(kGreen);
-	esgood->SetLineWidth(1);
-esgood->Draw("same");
-	esmissed->Draw("samep");
-	esprime->Draw("samep");
+	esgood->SetLineColor(kGreen+1);
+	esgood->SetLineWidth(3);
+	dividend->Divide(esgood);
+	esgood->SetMaximum(esprime->GetBinContent(1));
+	esgood->SetMinimum(1);
+	esgood->Draw("same");
+	esmissed->Draw("sameh");
+	esprime->Draw("samep");//*/
+	espur->Draw("samep");//*/
 	TLegend *legendMean = new TLegend(0.17,0.7,0.5,0.92,NULL,"brNDC");
         legendMean->SetFillColor(kWhite);
         legendMean->SetBorderSize(0);
-        legendMean->AddEntry(esgood,"generated SOT-Tracks","fp");
-        legendMean->AddEntry(esmissed,"LSOT-Tracks","fp");
-        legendMean->AddEntry(esprime,"primary tracks","fp");
+        legendMean->AddEntry(esgood,"generated SOT-Particles","fp");
+        legendMean->AddEntry(esmissed,"LSOT-Particles","fp");
+        legendMean->AddEntry(esprime,"primary particles","fp");
+        legendMean->AddEntry(espur,"no vertex particles","fp");
 	legendMean->Draw();
 	gPad->Modified();
 
-
+	
 	//fa1->Draw("same");
 	c1->cd(2);
-	lostpt->SetMarkerColor(kRed);
+	c1->GetPad(2)->SetGridy();
+	c1->GetPad(2)->SetRightMargin(.009);
+	dividend->Draw("samee");
+
+	/*lostpt->SetMarkerColor(kRed);
 	lostpt->SetMarkerSize(0.4);
 	lostpt->SetMarkerStyle(20);
 	goodpt->SetMarkerSize(0.4);
@@ -260,6 +314,6 @@ esgood->Draw("same");
 	//goodpt->Add(lostpt, -1.0);
 	//goodpt->Draw("COLZ");
 	fa2->SetLineColor(kBlack);
-	//fa2->Draw("same");
+	//fa2->Draw("same");*/
 
 }

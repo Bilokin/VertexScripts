@@ -1,7 +1,15 @@
 #define MAXN  1000
 #include <iostream>
 using std::cout;
-
+void format(TH2 * table)
+{
+	table->GetXaxis()->CenterLabels();
+	table->GetYaxis()->CenterLabels();
+	table->GetYaxis()->SetNdivisions(110);
+	table->GetXaxis()->SetNdivisions(110);
+	table->GetYaxis()->SetTitle("N_{rec}");
+	table->GetXaxis()->SetTitle("N_{gen}");
+}
 void table(){
 	int _vertex = 0;
 	int _pdg[MAXN];
@@ -18,10 +26,11 @@ void table(){
 	TPad *box1Pad = new TPad("box1", "box1", 0.52, 0.02, 0.98, 0.92);
 	boxPad->Draw();
 	box1Pad->Draw();*/
-	int nbins = 8;
+	int nbins = 10;
 	int maxd = nbins;
 	TH2I * probhist = new TH2I("Pw","# of tracks comparison",nbins,0,maxd ,nbins, 0, maxd );
-	TH2I * probhist_non = new TH2I("Pwo","# of tracks filtered",nbins,0,maxd , nbins,0, maxd );
+	//TH2I * probhist_non = new TH2I("Pwo","# of tracks d_{IP}>1.0mm, |p_{b}|>15GeV, |cos#theta|<0.95",nbins,0,maxd , nbins,0, maxd );
+	TH2I * probhist_non = new TH2I("Pwo","# of tracks btag>0.3",nbins,0,maxd , nbins,0, maxd );
 	
 	TChain* T = new TChain("TaggedVertices");
 	T->Add("TrashRecoTest.root");
@@ -54,6 +63,8 @@ void table(){
 	float _bmomentum  = 0.0;
 	float _bbarmomentum  = 0.0;
 	float _bbarteta = 0.0;
+	float _bcos = 0.0;
+	float _bbarcos = 0.0;
 	float _bteta = 0.0;
 	int _jetnumber = 0;
 	int _nvtx[MAXN];
@@ -81,17 +92,19 @@ void table(){
 	T3->SetBranchAddress("bptmiss", &_bptmiss);
 	T3->SetBranchAddress("bteta", &_bteta);
 	T3->SetBranchAddress("bbarteta", &_bbarteta);
-	T3->SetBranchAddress("bbarmomentum", &_bbarmomentum);
-	T3->SetBranchAddress("bmomentum", &_bmomentum);
+	//T3->SetBranchAddress("bbarmomentum", &_bbarmomentum);
+	//T3->SetBranchAddress("bmomentum", &_bmomentum);
 	T3->SetBranchAddress("bIPdistance", &_bIPdistance);
 	T3->SetBranchAddress("bbarIPdistance", &_bbarIPdistance);
 
 
 
+	T2->SetBranchAddress("bbarmomentum", &_bbarmomentum);
+	T2->SetBranchAddress("bmomentum", &_bmomentum);
 	T2->SetBranchAddress("btotalnumber", &_btotalnumber);
 	T2->SetBranchAddress("bbartotalnumber", &_bbartotalnumber);
-	T2->SetBranchAddress("bdistance", &_bdistance);
-	T2->SetBranchAddress("bbardistance", &_bbardistance);
+	T2->SetBranchAddress("bIPdistance", &_bdistance);
+	T2->SetBranchAddress("bbarIPdistance", &_bbardistance);
 	T2->SetBranchAddress("bnumber", &_bnumber);
 	T2->SetBranchAddress("bbarnumber", &_bbarnumber);
 	T2->SetBranchAddress("cnumber", &_cnumber);
@@ -100,6 +113,8 @@ void table(){
 	T2->SetBranchAddress("cbarnumber_f", &_cbarnumber_f);
 	T2->SetBranchAddress("bnumber_f", &_bnumber_f);
 	T2->SetBranchAddress("bbarnumber_f", &_bbarnumber_f);
+	T2->SetBranchAddress("cosquark", &_bcos);
+	T2->SetBranchAddress("cosantiquark", &_bbarcos);
 
 	T2->SetBranchAddress("tag", &_tag);
 
@@ -140,7 +155,7 @@ void table(){
 		float btags[2];
 		float btag = 0.0;
 		float bbartag = 0.0;
-		for (int jet = 0; jet < _jetnumber; jet++) 
+		/*for (int jet = 0; jet < _jetnumber; jet++) 
 		{
 			if (abs(_mctag[jet]) > 0) 
 			{
@@ -172,7 +187,7 @@ void table(){
 				bbars.push_back(j);
 				bbarn += _numberOfParticles[j];
 			}
-		}
+		}*/
 		bbartag = _bbartag1;
 		btag = _btag1;
 		bn = _brecnumber;
@@ -196,17 +211,6 @@ void table(){
 			{
 				totalgood++;
 			}
-			if (bn > _btotalnumber) 
-			{
-				std::cout << "i: " << i
-					  << " B mc: " << _btotalnumber
-					  << " B rec: " <<  bn //_brecnumber
-					  << " B rec ex: " <<  _bexists
-					  << " Bbar mc: " << _bbartotalnumber
-					  << " Bbar rec: " << _bbarrecnumber
-					  << " Bbar ex: " << _bbarexists
-					  << std::endl;
-			}
 		}
 		if (bbarn > -1 && _bbarnumber > -1) 
 		{
@@ -224,10 +228,19 @@ void table(){
 				totalgood++;
 			}
 		}
-		float s = 0.0;
+		float s = 0.950;
+		float btagcut = 0.3;
+		//std::cout << "cos: " << _bbarcos << "\n";
 		if (bn > -1
-		    && _bnumber > -1
-		    && btag > 0.3
+		    && _btotalnumber > -1
+		    //&& _btotalnumber < 7
+		    //&& _bdistance > 1.0
+		    //&& _bdistance < 35.0
+		    //&& _bmomentum > 15.0
+		    //&& (_bcos < s
+		    //&& _bcos >  -s)
+		    //&& bn < 8
+		    && btag > btagcut
 		    ) 
 		{
 			probhist_non->Fill(_btotalnumber, bn);
@@ -241,8 +254,15 @@ void table(){
 			}
 		}
 		if (bbarn > -1 
-		    && _bbarnumber> -1
-		    && bbartag > 0.3
+		    && _bbartotalnumber> -1
+		    //&& _bbartotalnumber < 7
+		    //&& _bbardistance > 1.0
+		    //&& _bbardistance < 35.0
+		    //&& _bbarmomentum > 15.0
+		    //&& (_bbarcos < s
+		    //&& _bbarcos > 0-s )
+		    //&& bbarn < 8
+		    && bbartag > btagcut
 		    ) 
 		{
 			probhist_non->Fill(_bbartotalnumber, bbarn);
@@ -253,6 +273,19 @@ void table(){
 			if (bbarn == _bbartotalnumber) 
 			{
 				aftercutsgood++;
+			}
+			if (bbarn == 0 && _bbartotalnumber == 3) 
+			{
+				/*std::cout << "i: " << i
+					  //<< " B mc: " << _btotalnumber
+					  //<< " B rec: " <<  bn //_brecnumber
+					  << " Bbar mc: " << _bbartotalnumber
+					  << " Bbar rec: " << _bbarrecnumber
+					  << " Bbar cos: " << _bbarcos
+					  << " Bbar dist: " << _bbardistance
+					  << " Bbar p: " << _bbarmomentum
+					  << " Bbar tag: " << bbartag
+					  << std::endl;*/
 			}
 		}
 		if ( _bnumber > 0 && _bbarnumber > 0) 
@@ -275,15 +308,22 @@ void table(){
 	cout << "Total events with 2 gen vertices: " << totalevents << " # events with 2 rec vertices: " << goodevents 
 		<< '(' << (float)goodevents/(float)totalevents*100.0 << "%)"
 		<< '\n';
-	probhist_non->GetXaxis()->SetTitle("N_{gen}");
-	probhist->GetXaxis()->SetTitle("N_{gen}");
-	probhist_non->GetYaxis()->SetTitle("N_{rec}");
-	probhist->GetYaxis()->SetTitle("N_{rec}");
 	gStyle->SetPalette(1);
 	c1->cd(1);
 	gPad->SetGrid();
-	probhist->Draw("text");
+	string opt = "text";
+	if (1) 
+	{
+		probhist->SetMinimum(0);
+		probhist->SetMaximum(400);
+		probhist_non->SetMinimum(0);
+		probhist_non->SetMaximum(400);
+		opt = "colz";
+	}
+	format(probhist);
+	probhist->Draw(opt.c_str());
 	c1->cd(2);
 	gPad->SetGrid();
-	probhist_non->Draw("text");
+	format(probhist_non);
+	probhist_non->Draw(opt.c_str());
 }
