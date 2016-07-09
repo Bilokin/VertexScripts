@@ -2,7 +2,7 @@
 #include <iostream>
 using std::cout;
 
-void purgatory(){
+void offsetpurgatory(){
 	TFile * file = TFile::Open("VertexRestorer.root");
 	int bin_e = 50;
 	float max_e = 1.;

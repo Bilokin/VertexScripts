@@ -1,27 +1,32 @@
-void pComparison()
+void pComparison(string recofile = "RecoTest.root")
 {
-	//TFile * file1 = TFile::Open("TrashMCTest.root");
-	//TTree * mctree = Stats;
+	TFile * file1 = TFile::Open("MCTest.root");
+	TTree * mctree = Vertices;
 	TCanvas * c1 = new TCanvas("c1", "The 3d view",0,0,1000,500);
 	c1->Divide(2,1);
-	TFile * file2 = TFile::Open("TrashRecoTest.root");
+	TFile * file2 = TFile::Open(recofile.c_str());
 	TTree * normaltree = TaggedVertices;
 	TTree * missedtree = MissedTracks;
 	TTree * missedvertextree = MissedVertex;
 	int bins = 50;
-	int high = 30;
+	int high = 10;
 	TH1F * missed = new TH1F("missed", "missed hist", bins, 0, high);
 	TH1F * normal = new TH1F("normal", "Momentum", bins, 0, high);
-	TH1F * miscos = new TH1F("miscos", "missed cos hist", bins, -1.0, 1.0);
-	TH1F * norcos = new TH1F("norcos", "cos#theta", bins, -1.0, 1.0);
+	TH1F * genp = new TH1F("genp", "Momentum", bins, 0, high);
+	TH1F * miscos = new TH1F("miscos", "missed cos hist", bins, .0, 1.0);
+	TH1F * norcos = new TH1F("norcos", "cos#theta", bins, .0, 1.0);
+	TH1F * gencos = new TH1F("gencos", "cos#theta", bins, .0, 1.0);
+	TH1F * sumcos = new TH1F("sumcos", "cos#theta", bins, .0, 1.0);
 	//gPad->SetGridx();
 	//gPad->SetGridy();
 	c1->cd(1);
+	genp->SetLineColor(kGreen);
+	genp->SetLineWidth(3);
 	normal->SetFillColor(kGray);
 	normal->SetLineColor(kGray+2);
 	normal->SetLineWidth(3);
-	//normaltree->Draw("momentumOfParticles >> normal","momentumOfParticles > 0.0");
-	normaltree->Draw("ptOfParticles >> normal","momentumOfParticles > 0.0");
+	normaltree->Draw("momentumOfParticles >> normal","momentumOfParticles > 0.0");
+	//normaltree->Draw("ptOfParticles >> normal","momentumOfParticles > 0.0");
 	//missed->SetMarkerStyle(20);
 	//missed->SetMarkerSize(0.8);
 	missed->SetLineColor(kRed);
@@ -29,10 +34,11 @@ void pComparison()
 
 	//recotree->SetMarkerColor(kGray);
 	normal->GetXaxis()->SetTitle("|p|_{prongs}, GeV");
-	norcos->SetMinimum(0);
-	missedtree->Draw("momentumMissed >> missed","","samee");
-//	missedtree->Draw("ptMissed >> missed","","same");
-	missedvertextree->Draw("momentumOfParticlesVtx >> +missed", "momentumOfParticlesVtx > -1.0", "samee");
+	gencos->SetMinimum(0);
+	missedtree->Draw("momentumMissed >> missed","abs(costhetaMissed) < 0.9 && distanceIPMissed > 1.","samehe");
+	mctree->Draw("momentumOfParticles >> genp","momentumOfParticles > 0.0", "hsame");
+//	missedtree->Draw("ptMissed >> missed","abs(costhetaMissed) < 0.9 && distanceIPMissed > 1.","same");
+//	missedvertextree->Draw("momentumOfParticlesVtx >> +missed", "momentumOfParticlesVtx > -1.0", "samee");
 //	missedvertextree->Draw("ptOfParticlesVtx >> +missed", "ptOfParticlesVtx > -1.0", "same");
 	TLegend *legendMean = new TLegend(0.17,0.7,0.5,0.92,NULL,"brNDC");
         legendMean->SetFillColor(kWhite);
@@ -42,18 +48,25 @@ void pComparison()
 	legendMean->Draw();
 	gPad->Modified();
 	c1->cd(2);
+	gencos->SetLineColor(kGreen);
+	gencos->SetLineWidth(3);
+	sumcos->SetLineColor(kBlue);
+	sumcos->SetLineWidth(3);
 	norcos->SetFillColor(kGray);
 	norcos->SetLineColor(kGray+2);
 	norcos->SetLineWidth(3);
-	normaltree->Draw("costhetaOfParticles >> norcos", "costhetaOfParticles > -1.0");
+	mctree->Draw("abs(costhetaOfParticles) >> gencos", "costhetaOfParticles > -1.0");
+	gencos->Draw();
+	normaltree->Draw("abs(costhetaOfParticles) >> norcos", "costhetaOfParticles > -1.0","same");
 	//miscos->SetMarkerStyle(20);
 	//miscos->SetMarkerSize(0.8);
 	miscos->SetLineColor(kRed);
 	miscos->SetLineWidth(3);
-
-	norcos->GetXaxis()->SetTitle("cos#theta_{prongs}");
-	missedvertextree->Draw("costhetaOfParticlesVtx >> +miscos", "costhetaOfParticlesVtx > -1.0", "same");
-	missedtree->Draw("costhetaMissed >> +miscos","","same");
+	norcos->GetXaxis()->SetTitle("|cos#theta_{prongs}|");
+	missedvertextree->Draw("abs(costhetaOfParticlesVtx) >> +miscos", "costhetaOfParticlesVtx > -1.0", "same");
+	missedtree->Draw("abs(costhetaMissed) >> +miscos","","same");
+	sumcos->Add(norcos, miscos);
 	miscos->Draw("same");
+	sumcos->Draw("same");
 	gPad->Modified();
 }

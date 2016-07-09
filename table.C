@@ -1,5 +1,6 @@
 #define MAXN  1000
 #include <iostream>
+#include <cmath>
 using std::cout;
 void format(TH2 * table)
 {
@@ -8,9 +9,11 @@ void format(TH2 * table)
 	table->GetYaxis()->SetNdivisions(110);
 	table->GetXaxis()->SetNdivisions(110);
 	table->GetYaxis()->SetTitle("N_{rec}");
+	table->GetYaxis()->SetTitleSize(0.045);
 	table->GetXaxis()->SetTitle("N_{gen}");
+	table->GetXaxis()->SetTitleSize(0.045);
 }
-void table(){
+void table(string recofilename = "RecoTest.root"){
 	int _vertex = 0;
 	int _pdg[MAXN];
 	float _probability[MAXN];
@@ -30,22 +33,28 @@ void table(){
 	int maxd = nbins;
 	TH2I * probhist = new TH2I("Pw","# of tracks comparison",nbins,0,maxd ,nbins, 0, maxd );
 	//TH2I * probhist_non = new TH2I("Pwo","# of tracks d_{IP}>1.0mm, |p_{b}|>15GeV, |cos#theta|<0.95",nbins,0,maxd , nbins,0, maxd );
-	TH2I * probhist_non = new TH2I("Pwo","# of tracks btag>0.3",nbins,0,maxd , nbins,0, maxd );
+	TH2I * probhist_non = new TH2I("Pwo","# of tracks btag > 0.8",nbins,0,maxd , nbins,0, maxd );
 	
 	TChain* T = new TChain("TaggedVertices");
-	T->Add("TrashRecoTest.root");
+	T->Add(recofilename.c_str());
 	TChain* T3 = new TChain("Stats");
-	T3->Add("TrashRecoTest.root");
+	T3->Add(recofilename.c_str());
 	TChain* T2 = new TChain("Stats");
-	T2->Add("TrashMCTest.root");
+	T2->Add("MCTest.root");
 	TChain* JETS = new TChain("Jets");
-	JETS->Add("TrashRecoTest.root");
+	JETS->Add(recofilename.c_str());
 
 	int _bnumber = 0;
-	int _bexists = 0;
-	int _bbarexists = 0;
+	int _bnvtx = 0;
+	int _bbarnvtx = 0;
 	int _bbarnumber = 0;
 	int _btotalnumber = 0;
+	int _bbarcharge = 0;
+	int _bcharge = 0;
+	int _cbarcharge = 0;
+	int _ccharge = 0;
+	int _bbarrecocharge = 0;
+	int _brecocharge = 0;
 
 	int _cnumber = 0;
 	int _cbarnumber = 0;
@@ -53,6 +62,8 @@ void table(){
 	int _tag = 0;
 	int _brecnumber = 0;
 	int _bbarrecnumber = 0;
+	int _boffsetnumber = 0;
+	int _bbaroffsetnumber = 0;
 	float _bdistance = 0.0;
 	float _bbardistance = 0.0;
 	float _bIPdistance = 0.0;
@@ -82,20 +93,26 @@ void table(){
 	float _btag1 = 0.0;
 	float _bbartag1 = 0.0;
 	
-	T3->SetBranchAddress("bexists", &_bexists);
-	T3->SetBranchAddress("bbarexists", &_bbarexists);
+	T3->SetBranchAddress("bnvtx", &_bnvtx);
+	T3->SetBranchAddress("bbarnvtx", &_bbarnvtx);
 	T3->SetBranchAddress("btag", &_btag1);
 	T3->SetBranchAddress("bbartag", &_bbartag1);
 	T3->SetBranchAddress("bnumber", &_brecnumber);
 	T3->SetBranchAddress("bbarnumber", &_bbarrecnumber);
 	T3->SetBranchAddress("bbarptmiss", &_bbarptmiss);
+	T3->SetBranchAddress("bnoffsettracks", &_boffsetnumber);
+	T3->SetBranchAddress("bbarnoffsettracks", &_bbaroffsetnumber);
 	T3->SetBranchAddress("bptmiss", &_bptmiss);
-	T3->SetBranchAddress("bteta", &_bteta);
-	T3->SetBranchAddress("bbarteta", &_bbarteta);
+	//T3->SetBranchAddress("bteta", &_bteta);
+	//T3->SetBranchAddress("bbarteta", &_bbarteta);
 	//T3->SetBranchAddress("bbarmomentum", &_bbarmomentum);
 	//T3->SetBranchAddress("bmomentum", &_bmomentum);
 	T3->SetBranchAddress("bIPdistance", &_bIPdistance);
 	T3->SetBranchAddress("bbarIPdistance", &_bbarIPdistance);
+	T3->SetBranchAddress("bcostheta", &_bcos);
+	T3->SetBranchAddress("bbarcostheta", &_bbarcos);
+	T3->SetBranchAddress("bcharge", &_brecocharge);
+	T3->SetBranchAddress("bbarcharge", &_bbarrecocharge);
 
 
 
@@ -109,12 +126,14 @@ void table(){
 	T2->SetBranchAddress("bbarnumber", &_bbarnumber);
 	T2->SetBranchAddress("cnumber", &_cnumber);
 	T2->SetBranchAddress("cbarnumber", &_cbarnumber);
-	T2->SetBranchAddress("cnumber_f", &_cnumber_f);
-	T2->SetBranchAddress("cbarnumber_f", &_cbarnumber_f);
-	T2->SetBranchAddress("bnumber_f", &_bnumber_f);
-	T2->SetBranchAddress("bbarnumber_f", &_bbarnumber_f);
-	T2->SetBranchAddress("cosquark", &_bcos);
-	T2->SetBranchAddress("cosantiquark", &_bbarcos);
+	T2->SetBranchAddress("bcharge", &_bcharge);
+	T2->SetBranchAddress("bbarcharge", &_bbarcharge);
+	T2->SetBranchAddress("ccharge", &_ccharge);
+	T2->SetBranchAddress("cbarcharge", &_cbarcharge);
+	//T2->SetBranchAddress("cnumber_f", &_cnumber_f);
+	//T2->SetBranchAddress("cbarnumber_f", &_cbarnumber_f);
+	//T2->SetBranchAddress("bnumber_f", &_bnumber_f);
+	//T2->SetBranchAddress("bbarnumber_f", &_bbarnumber_f);
 
 	T2->SetBranchAddress("tag", &_tag);
 
@@ -149,53 +168,16 @@ void table(){
 		int bbarn = 0;
 		if (_tag == 0) 
 		{
-			continue;
+			//continue;
 		}
 		int bjets = 0;
 		float btags[2];
 		float btag = 0.0;
 		float bbartag = 0.0;
-		/*for (int jet = 0; jet < _jetnumber; jet++) 
-		{
-			if (abs(_mctag[jet]) > 0) 
-			{
-				btags[bjets++] = _btag[jet];
-
-			}
-			if (_mctag[jet] < 0) 
-			{
-				btag  = _btag[jet];
-			}
-			if (_mctag[jet] > 0) 
-			{
-				bbartag  = _btag[jet];
-			}
-		}
-		if (bjets < 2 || bbartag == btag) 
-		{
-			//continue;
-		}
-		for (int j = 0; j < _vertex; j++) 
-		{
-			if (_pdg[j] == 5) 
-			{
-				bs.push_back(j);
-				bn += _numberOfParticles[j];
-			}
-			if (_pdg[j] == -5) 
-			{
-				bbars.push_back(j);
-				bbarn += _numberOfParticles[j];
-			}
-		}*/
 		bbartag = _bbartag1;
 		btag = _btag1;
 		bn = _brecnumber;
 		bbarn = _bbarrecnumber;
-		//bn = _cnumber_f + _bnumber_f;
-		//bbarn = _cbarnumber_f + _bbarnumber_f;
-		//_btotalnumber = _bnumber + _cnumber;
-		//_bbartotalnumber = _bbarnumber + _cbarnumber;
 		if (bn > -1 && _bnumber > -1 ) 
 		{
 			probhist->Fill(_btotalnumber, bn);
@@ -203,7 +185,7 @@ void table(){
 			{
 				total++;
 			}
-			if (bn == 0) 
+			if (bn < 1) 
 			{
 				zerovtx++;
 			}
@@ -219,7 +201,7 @@ void table(){
 			{
 				total++;
 			}
-			if (bbarn == 0) 
+			if (bbarn < 1) 
 			{
 				zerovtx++;
 			}
@@ -228,16 +210,25 @@ void table(){
 				totalgood++;
 			}
 		}
-		float s = 0.950;
-		float btagcut = 0.3;
+		float s = 0.90;
+		float btagcut = 0.8;
+		float pcut = 15.0;
 		//std::cout << "cos: " << _bbarcos << "\n";
 		if (bn > -1
 		    && _btotalnumber > -1
+		    //&& (_bcharge == _brecocharge )
+		    //&& (_bcharge == 0 && _brecocharge == 0 || _bcharge * _brecocharge > 0)
+		    //&& (abs(_bcharge) == 1 || abs(_bcharge) == 0)
+		    //&& _boffsetnumber <= 0
+		    //&& _bnumber > 1 && _cnumber > 1
+		    //&& (float)bn/(float)_boffsetnumber > 0.95
 		    //&& _btotalnumber < 7
 		    //&& _bdistance > 1.0
 		    //&& _bdistance < 35.0
-		    //&& _bmomentum > 15.0
-		    //&& (_bcos < s
+		    && _bmomentum > pcut
+		    //&& (_bnvtx == 2 || bn == 3)
+		    //&& abs(_bcos) > s
+		    //&& abs(_bcos) < s+0.046
 		    //&& _bcos >  -s)
 		    //&& bn < 8
 		    && btag > btagcut
@@ -255,11 +246,19 @@ void table(){
 		}
 		if (bbarn > -1 
 		    && _bbartotalnumber> -1
+		    //&& _bbarnumber > 1 && _cbarnumber > 1
+		    //&& (_bbarcharge == _bbarrecocharge)
+		    //&& (_bbarcharge == 0 && _bbarrecocharge == 0 || _bbarcharge * _bbarrecocharge > 0)
+		    //&& (abs(_bbarcharge) == 1 || abs(_bbarcharge) == 0)
+		    //&& _bbaroffsetnumber <= 0
+		    //&& (float)bbarn/(float)_bbaroffsetnumber > 0.95
 		    //&& _bbartotalnumber < 7
 		    //&& _bbardistance > 1.0
 		    //&& _bbardistance < 35.0
-		    //&& _bbarmomentum > 15.0
-		    //&& (_bbarcos < s
+		    && _bbarmomentum > pcut
+		    //&& (_bbarnvtx == 2 || bbarn == 3)
+		    //&& abs(_bbarcos) > s
+		    //&& abs(_bbarcos) < s+0.046
 		    //&& _bbarcos > 0-s )
 		    //&& bbarn < 8
 		    && bbartag > btagcut
@@ -314,16 +313,19 @@ void table(){
 	string opt = "text";
 	if (1) 
 	{
+		int max = 2300;
 		probhist->SetMinimum(0);
-		probhist->SetMaximum(400);
+		//probhist->SetMaximum(max);
 		probhist_non->SetMinimum(0);
-		probhist_non->SetMaximum(400);
+		//probhist_non->SetMaximum(max);
 		opt = "colz";
 	}
 	format(probhist);
+	probhist->SetStats(0);
 	probhist->Draw(opt.c_str());
 	c1->cd(2);
 	gPad->SetGrid();
 	format(probhist_non);
+	probhist_non->SetStats(0);
 	probhist_non->Draw(opt.c_str());
 }

@@ -52,19 +52,15 @@ void distEfficiency()
 	int _PDGreco[MAXV];
 	int _nparticles[MAXV];
 	int _type[MAXV][MAXV];
-	int _charge[MAXV][MAXV];
 
 	RECO->SetBranchAddress("numberOfTagged", &_numberOfTagged);
 	RECO->SetBranchAddress("numberOfParticles", &_nparticles);
-	RECO->SetBranchAddress("chargeOfParticles", &_nparticles);
-	RECO->SetBranchAddress("pidTypeOfParticles", &_type);
-	RECO->SetBranchAddress("chargeOfParticles", &_charge);
+	RECO->SetBranchAddress("trueTypeOfParticles", &_type);
 	RECO->SetBranchAddress("PDG", _PDGreco);
 	int mTotalNumberOfEvents1 = MC->GetEntries();
 	int totalnumber = 0;
 	int totalb = 0;
 	int kaonnumber = 0;
-	int kaonnumbertotal = 0;
 	int pionnumber = 0;
 	for (int k = 0; k < mTotalNumberOfEvents1; k++)
 	{
@@ -75,63 +71,45 @@ void distEfficiency()
 		for (int i = 0; i < _numberOfTagged; i++) 
 		{
 			int knumber = 0;
-			int kcharge = 0;
-			int kbarnumber = 0;
-			int kbarcharge = 0;
-			if (_PDGreco[i] > 0) 
+			if (_nparticles[i] < 1 ) 
 			{
-				bvtxnumber++;
+				continue;
 			}
 			if (_PDGreco[i] > 0) 
 			{
-				bbarvtxnumber++;
+				bvtxnumber ++;
+			}
+			if (_PDGreco[i] < 0) 
+			{
+				bbarvtxnumber ++;
 			}
 			for (int j = 0; j < _nparticles[i]; j++) 
 			{
-				//if (abs(_type[i][j]) == 321) 
-				if (_PDGreco[i] < 0) 
+				if (abs(_type[i][j]) == 321) 
 				{
-					if (abs(_type[i][j]) == 321)
-					{
-						kbarnumber++;
-						kbarcharge += _charge[i][j];
-					}
+					knumber++;
 				}
-				if (_PDGreco[i] > 0) 
+				if (abs(_type[i][j]) == 211) 
 				{
-					if (abs(_type[i][j]) == 321)
-					{
-						knumber++;
-						kcharge += _charge[i][j];
-					}
+					pionnumber++;
 				}
+				totalnumber++;
 			}
-			if (knumber > 0 && kcharge < 0) 
-			{
-				kaonnumber++;
-			}
-			if (kbarnumber > 0 && kbarcharge > 0) 
-			{
-				kaonnumber++;
-			}
-			if (knumber > 0 && kcharge != 0) 
-			{
-				cout << "K: " << knumber << " q: " << kcharge << endl; 
-				kaonnumbertotal++;
-			}
-			if (kbarnumber > 0 && kbarcharge != 0) 
-			{
-				cout << "Kbar: " << kbarnumber << " q: " << kbarcharge << endl; 
-				kaonnumbertotal++;
-			}
-			//kaonnumber += knumber;
+			kaonnumber += knumber;
 			kaons->Fill(knumber);
 		}
+		if (bvtxnumber) 
+		{
+			totalb++;
+		}
+		if (bbarvtxnumber) 
+		{
+			totalb++;
+		}
 	}
-	cout << "Total: " << kaonnumbertotal <<  " purity: " << (float)kaonnumber/kaonnumbertotal << endl;
-	//cout << "Nparticles: " << totalb << " Nkaons: " << kaonnumber << " (" << (float)kaonnumber/totalb*100 << "%)\n" ;
-	//cout << "\tNpions: " << pionnumber << " (" << (float)pionnumber/totalb*100 << "%)\n" ;
-	//cout << "\tNpions: " << totalnumber << " (" << (float)totalnumber/totalb*100 << "%)\n" ;
-	//kaons->Scale(1./totalb);
-	//kaons->Draw("htext");
+	cout << "Nparticles: " << totalb << " Nkaons: " << kaonnumber << " (" << (float)kaonnumber/totalb*100 << "%)\n" ;
+	cout << "\tNpions: " << pionnumber << " (" << (float)pionnumber/totalb*100 << "%)\n" ;
+	cout << "\tNpions: " << totalnumber << " (" << (float)totalnumber/totalb*100 << "%)\n" ;
+	kaons->Scale(1./totalb);
+	kaons->Draw("htext");
 }
